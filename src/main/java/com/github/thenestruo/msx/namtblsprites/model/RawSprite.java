@@ -47,6 +47,6 @@ public class RawSprite {
 	}
 
 	public List<Char> getChars() {
-		return chars;
+		return Collections.unmodifiableList(chars);
 	}
 }

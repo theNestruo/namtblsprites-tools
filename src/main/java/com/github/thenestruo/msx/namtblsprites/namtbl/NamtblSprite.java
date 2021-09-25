@@ -31,6 +31,7 @@ public class NamtblSprite {
 	 * @param pChars the chars that compose the NAMTBL sprite
 	 * @param pWidth the width of the sprites
 	 * @param pHeight the height of the sprites
+	 * @param pCentered {@code true} to center the sprites, {@code false} to preserve left padding
 	 */
 	public NamtblSprite(final String spriteId,
 			final List<Char> pChars, final int pWidth, final int pHeight, final boolean pCentered) {
@@ -140,15 +141,15 @@ public class NamtblSprite {
 
 	private List<String> asmHeader() {
 
-		if ((!this.centered)
-				|| (this.width % 2 == 1)) {
+		if (!this.centered) {
 			return Collections.singletonList(String.format(".%s:", this.spriteId));
 		}
 
 		final List<String> lines = new ArrayList<>();
-		lines.add(String.format(".%s:", this.spriteId));
 		lines.add(String.format(".%s_L:", this.spriteId));
-		lines.add(indent("dec de ; (-1, 0)"));
+		if (this.width % 2 != 0) {
+			lines.add(indent("dec de ; (-1, 0)"));
+		}
 		lines.add(String.format(".%s_R:", this.spriteId));
 		return lines;
 	}
@@ -179,11 +180,8 @@ public class NamtblSprite {
 							x > 0 ? "inc de ; (+1, 0)" : "dec de ; (-1, 0)");
 		}
 
-		final String offset = String.format(
-				(y != 0)
-					? "%1$d %2$+d*NAMTBL_BUFFER_WIDTH "
-					: "%1$d",
-				-x, -y);
+		final String offset =
+				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", -x, -y);
 
 		return Arrays.asList(
 				"ld a, e",

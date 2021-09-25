@@ -1,6 +1,7 @@
 package com.github.thenestruo.msx.namtblsprites.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.Validate;
@@ -52,7 +53,7 @@ public class RawData {
 	}
 
 	public List<Short> getData() {
-		return data;
+		return Collections.unmodifiableList(data);
 	}
 
 	public int getWidth() {

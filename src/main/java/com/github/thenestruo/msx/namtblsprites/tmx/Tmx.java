@@ -41,11 +41,46 @@ class Tmx {
 		@XmlAttribute(name = "data")
 		private Data data;
 
+		/**
+		 * Default constructor
+		 */
+		public Layer() {
+			super();
+		}
+
+		/**
+		 * Copy constructor
+		 * @param that Data
+		 */
+		private Layer(Layer that) {
+			this();
+
+			this.width = that.width;
+			this.height = that.height;
+			this.data = new Data(that.data);
+		}
+
 		@JsonIgnoreProperties(ignoreUnknown = true)
 		public static class Data {
 
 			@JacksonXmlText
 			private String csv;
+
+			/**
+			 * Default constructor
+			 */
+			public Data() {
+				super();
+			}
+
+			/**
+			 * Copy constructor
+			 * @param that Data
+			 */
+			private Data(Data that) {
+				this();
+				this.csv = that.csv;
+			}
 
 			public String getCsv() {
 				return csv;
@@ -73,11 +108,11 @@ class Tmx {
 		}
 
 		public Data getData() {
-			return data;
+			return data != null ? new Data(data) : null;
 		}
 
 		public void setData(Data data) {
-			this.data = data;
+			this.data = data != null ? new Data(data) : null;
 		}
 	}
 
@@ -90,10 +125,10 @@ class Tmx {
 	}
 
 	public Layer getLayer() {
-		return layer;
+		return layer != null ? new Layer(layer) : null;
 	}
 
 	public void setLayer(Layer layer) {
-		this.layer = layer;
+		this.layer = layer != null ? new Layer(layer) : null;
 	}
 }

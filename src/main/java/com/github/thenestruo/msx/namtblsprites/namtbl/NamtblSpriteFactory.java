@@ -39,6 +39,7 @@ public class NamtblSpriteFactory {
 	 * Builds the {@link NamtblSprite NAMTBL sprites}
 	 * @param width the width of the sprites
 	 * @param height the width of the sprites
+	 * @param centered {@code true} to center the sprites, {@code false} to preserve left padding
 	 * @return the NAMTBL sprites in top to down, then left to right, order
 	 */
 	public List<NamtblSprite> create(final int width, final int height, final boolean centered) {
