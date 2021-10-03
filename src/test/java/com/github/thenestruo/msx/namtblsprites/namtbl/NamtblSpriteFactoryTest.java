@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite.Alignment;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.ClassPathResource;
 
@@ -18,13 +19,13 @@ public class NamtblSpriteFactoryTest {
 	@Test
 	public void testExample() throws IOException {
 
-		this.asserts(this.factory().create(3, 3, true));
+		this.asserts(this.factory().create(3, 3, Alignment.CENTER));
 	}
 
 	@Test
 	public void testExampleCenterOff() throws IOException {
 
-		this.asserts(this.factory().create(3, 3, false));
+		this.asserts(this.factory().create(3, 3, Alignment.LEFT));
 	}
 	private NamtblSpriteFactory factory() throws IOException {
 

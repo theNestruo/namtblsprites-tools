@@ -2,6 +2,7 @@ package com.github.thenestruo.msx.namtblsprites.namtbl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -19,8 +20,27 @@ import org.apache.commons.lang3.Validate;
  */
 public class NamtblSprite {
 
+	/** NAMTBL sprite alignment and drawing direciton */
+	public static enum Alignment {
+
+		/** Aligned left, draw to right */
+		LEFT(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator)),
+
+		/** Centered, draw to right */
+		CENTER(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator)),
+
+		/** Aligned right, draw to left */
+		RIGHT(Coord.bottomUpComparator.thenComparing(Coord.rightToLeftComparator));
+
+		private final Comparator<Coord> comparator;
+
+		private Alignment(final Comparator<Coord> pComparator) {
+			this.comparator = pComparator;
+		}
+	};
+
 	private final String spriteId;
-	private final boolean centered;
+	private final Alignment alignment;
 	private final int width;
 	private final int height;
 	private final List<Char> sequence;
@@ -31,14 +51,14 @@ public class NamtblSprite {
 	 * @param pChars the chars that compose the NAMTBL sprite
 	 * @param pWidth the width of the sprites
 	 * @param pHeight the height of the sprites
-	 * @param pCentered {@code true} to center the sprites, {@code false} to preserve left padding
+	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
 	 */
 	public NamtblSprite(final String spriteId,
-			final List<Char> pChars, final int pWidth, final int pHeight, final boolean pCentered) {
+			final List<Char> pChars, final int pWidth, final int pHeight, final Alignment pAlignment) {
 		super();
 
 		this.spriteId = Validate.notBlank(spriteId);
-		this.centered = pCentered;
+		this.alignment = pAlignment;
 
 		Validate.notNull(pChars);
 		Validate.isTrue(!pChars.isEmpty());
@@ -64,16 +84,18 @@ public class NamtblSprite {
 
 		{
 			final List<Char> chars = new ArrayList<>(pChars);
-			chars.sort(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator));
+			chars.sort(alignment.comparator);
 
 			final List<Char> lSequence = new ArrayList<>();
-			int x = pCentered ? Math.floorDiv(width - 1, 2) : 0;
+			int x = alignment == Alignment.LEFT ? 0
+					: alignment == Alignment.CENTER ? Math.floorDiv(width - 1, 2)
+					: pWidth -1;
 			int y = pHeight -1;
 			for (Char c : chars) {
 				final int diffX = c.getX() - x;
 				final int diffY = c.getY() - y;
 				lSequence.add(new Char(diffX, diffY, c.getValue()));
-				x = c.getX() + 1;
+				x = c.getX() + (alignment == Alignment.RIGHT ? -1 : 1);
 				y = c.getY();
 			}
 			this.sequence = Collections.unmodifiableList(lSequence);
@@ -105,8 +127,9 @@ public class NamtblSprite {
 			lines.add(indent(String.format("ld hl, .%s_DATA", this.spriteId)));
 			lines.addAll(indent(this.asmInstructions()));
 			lines.add(indent("ret"));
-			lines.add(String.format(".%s_DATA:", this.spriteId));
-			lines.addAll(indent(this.asmData()));
+			lines.addAll(alignment != Alignment.RIGHT
+					? this.asmDataLeft()
+					: this.asmDataRight());
 		}
 
 		return lines;
@@ -141,7 +164,7 @@ public class NamtblSprite {
 
 	private List<String> asmHeader() {
 
-		if (!this.centered) {
+		if (alignment != Alignment.CENTER) {
 			return Collections.singletonList(String.format(".%s:", this.spriteId));
 		}
 
@@ -162,7 +185,7 @@ public class NamtblSprite {
 		final List<String> lines = new ArrayList<>();
 		for (Char c : this.sequence) {
 			lines.addAll(this.asmOffsetInstructions(c));
-			lines.add("ldi");
+			lines.add(alignment == Alignment.RIGHT ? "ldd" : "ldi");
 		}
 		return lines;
 	}
@@ -191,12 +214,26 @@ public class NamtblSprite {
 				"dec d");
 	}
 
-	private List<String> asmData() {
+	private List<String> asmDataLeft() {
 
 		final List<String> lines = new ArrayList<>();
+		lines.add(String.format(".%s_DATA:", this.spriteId));
 		for (List<Char> partition : ListUtils.partition(this.sequence, 8)) {
-			lines.add("db " + StringUtils.join(asmBytes(partition), ", "));
+			lines.add(indent("db " + StringUtils.join(asmBytes(partition), ", ")));
 		}
+		return lines;
+	}
+
+	private List<String> asmDataRight() {
+
+		final List<Char> reversedSequence = new ArrayList<>(this.sequence);
+		Collections.reverse(reversedSequence);
+
+		final List<String> lines = new ArrayList<>();
+		for (List<Char> partition : ListUtils.partition(reversedSequence, 8)) {
+			lines.add(indent("db " + StringUtils.join(asmBytes(partition), ", ")));
+		}
+		lines.add(String.format(".%s_DATA: equ $ - 1", this.spriteId));
 		return lines;
 	}
 

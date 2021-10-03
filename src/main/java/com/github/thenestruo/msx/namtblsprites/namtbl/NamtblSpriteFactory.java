@@ -6,6 +6,7 @@ import java.util.List;
 import com.github.thenestruo.msx.namtblsprites.model.Char;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.RawSprite;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite.Alignment;
 
 import org.apache.commons.lang3.Validate;
 
@@ -39,10 +40,10 @@ public class NamtblSpriteFactory {
 	 * Builds the {@link NamtblSprite NAMTBL sprites}
 	 * @param width the width of the sprites
 	 * @param height the width of the sprites
-	 * @param centered {@code true} to center the sprites, {@code false} to preserve left padding
+	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
 	 * @return the NAMTBL sprites in top to down, then left to right, order
 	 */
-	public List<NamtblSprite> create(final int width, final int height, final boolean centered) {
+	public List<NamtblSprite> create(final int width, final int height, final Alignment alignment) {
 
 		final List<NamtblSprite> sprites = new ArrayList<>();
 		int i = 0;
@@ -56,7 +57,7 @@ public class NamtblSpriteFactory {
 
 			// Saves the sprite
 			if (!chars.isEmpty()) {
-				sprites.add(new NamtblSprite(spriteId, chars, width, height, centered));
+				sprites.add(new NamtblSprite(spriteId, chars, width, height, alignment));
 			}
 		}
 		return sprites;

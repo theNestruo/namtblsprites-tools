@@ -13,6 +13,7 @@ import java.util.List;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite.Alignment;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.FileSystemResource;
 
@@ -41,7 +42,8 @@ public class Tmx2NamtblSpritesApp {
 	private static final String ADD = "add";
 	private static final String BLANK = "blank";
 	private static final String NAME = "name";
-	private static final String CENTER_OFF = "centerOff";
+	private static final String LEFT = "left";
+	private static final String RIGHT = "right";
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
@@ -93,7 +95,8 @@ public class Tmx2NamtblSpritesApp {
 		options.addOption(ADD, true, "The addend for the values");
 		options.addOption(BLANK, true, "The blank value to be ignored");
 		options.addOption(NAME, true, "An identifying name for the rendering routines");
-		options.addOption(CENTER_OFF, "Disables centering of the sprite (preserves left padding)");
+		options.addOption(LEFT, "Align left, draw to right");
+		options.addOption(RIGHT, "Align right, draw to left");
 		return options;
 	}
 
@@ -160,9 +163,12 @@ public class Tmx2NamtblSpritesApp {
 
 		final int spriteWidth = Integer.parseUnsignedInt(command.getOptionValue(WIDTH, Integer.toString(rawData.getWidth())));
 		final int spriteHeight = Integer.parseUnsignedInt(command.getOptionValue(HEIGHT, Integer.toString(rawData.getHeight())));
-		final boolean centered = !command.hasOption(CENTER_OFF);
+		final Alignment alignment =
+				command.hasOption(LEFT) ? Alignment.LEFT
+				: command.hasOption(RIGHT) ? Alignment.RIGHT
+				: Alignment.CENTER;
 
-		return factory.create(spriteWidth, spriteHeight, centered);
+		return factory.create(spriteWidth, spriteHeight, alignment);
 	}
 
 	private static void writeAsmFile(
