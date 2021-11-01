@@ -9,27 +9,28 @@
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target><!-- due: jackson-module-jaxb-annotations 2.12.5 -->
+		<maven.compiler.target>11</maven.compiler.target><!-- due: jackson -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<mainClass>com.github.thenestruo.msx.namtblsprites.Tmx2NamtblSpritesApp</mainClass>
 
-		<commons-cli.version>1.4</commons-cli.version>
+		<commons-cli.version>1.5.0</commons-cli.version>
 		<commons-collections4.version>4.4</commons-collections4.version>
 		<commons-lang3.version>3.12.0</commons-lang3.version>
 		<commons-io.version>2.11.0</commons-io.version>
-		<jackson.version>2.12.5</jackson.version>
+		<jackson.version>2.13.0</jackson.version>
+		<jakarta.xml.bind.version>3.0.1</jakarta.xml.bind.version>
 		<junit.version>4.13.2</junit.version>
 		<logback.version>1.2.6</logback.version>
+		<spotbugs.version>4.4.2</spotbugs.version>
 
 		<maven-enforcer-plugin.version>3.0.0</maven-enforcer-plugin.version>
 		<extra-enforcer-rules.version>1.4</extra-enforcer-rules.version>
 		<maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
 		<versions-maven-plugin.version>2.7</versions-maven-plugin.version>
 		<modernizer-maven-plugin.version>2.1.0</modernizer-maven-plugin.version>
-		<spotbugs-maven-plugin.version>4.4.1</spotbugs-maven-plugin.version>
-		<spotbugs.version>4.4.1</spotbugs.version>
+		<spotbugs-maven-plugin.version>${spotbugs.version}</spotbugs-maven-plugin.version>
 	</properties>
 
 	<dependencyManagement>
@@ -86,6 +87,13 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-xml</artifactId>
+		</dependency>
+
+		<!-- Jakarta XML Binding -->
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>${jakarta.xml.bind.version}</version>
 		</dependency>
 
 		<!-- JUnit -->

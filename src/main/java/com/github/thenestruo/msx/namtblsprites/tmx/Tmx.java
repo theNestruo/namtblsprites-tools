@@ -1,10 +1,10 @@
 package com.github.thenestruo.msx.namtblsprites.tmx;
 
-import javax.xml.bind.annotation.XmlAttribute;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+
+import jakarta.xml.bind.annotation.XmlAttribute;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "map")
