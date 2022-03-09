@@ -219,7 +219,7 @@ public class NamtblSprite {
 		final List<String> lines = new ArrayList<>();
 		lines.add(String.format(".%s_DATA:", this.spriteId));
 		for (List<Char> partition : ListUtils.partition(this.sequence, 8)) {
-			lines.add(indent("db " + StringUtils.join(asmBytes(partition), ", ")));
+			lines.add(indent("db " + String.join(", ", asmBytes(partition))));
 		}
 		return lines;
 	}
@@ -231,7 +231,7 @@ public class NamtblSprite {
 
 		final List<String> lines = new ArrayList<>();
 		for (List<Char> partition : ListUtils.partition(reversedSequence, 8)) {
-			lines.add(indent("db " + StringUtils.join(asmBytes(partition), ", ")));
+			lines.add(indent("db " + String.join(", ", asmBytes(partition))));
 		}
 		lines.add(String.format(".%s_DATA: equ $ - 1", this.spriteId));
 		return lines;
