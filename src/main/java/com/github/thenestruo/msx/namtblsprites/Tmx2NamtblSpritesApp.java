@@ -47,7 +47,7 @@ public class Tmx2NamtblSpritesApp {
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws ParseException, IOException {
 
 		// Parses the command line
 		final Options options = options();
