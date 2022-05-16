@@ -44,6 +44,7 @@ public class Tmx2NamtblSpritesApp {
 	private static final String NAME = "name";
 	private static final String LEFT = "left";
 	private static final String RIGHT = "right";
+	private static final String ALIGN = "align";
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
@@ -97,6 +98,7 @@ public class Tmx2NamtblSpritesApp {
 		options.addOption(NAME, true, "An identifying name for the rendering routines");
 		options.addOption(LEFT, "Align left, draw to right");
 		options.addOption(RIGHT, "Align right, draw to left");
+		options.addOption(ALIGN, "Align center, draw to right (alt. entry points for even widths)");
 		return options;
 	}
 
@@ -166,7 +168,8 @@ public class Tmx2NamtblSpritesApp {
 		final Alignment alignment =
 				command.hasOption(LEFT) ? Alignment.LEFT
 				: command.hasOption(RIGHT) ? Alignment.RIGHT
-				: Alignment.CENTER;
+				: command.hasOption(ALIGN) ? Alignment.ALIGNED
+				: Alignment.DEFAULT;
 
 		return factory.create(spriteWidth, spriteHeight, alignment);
 	}

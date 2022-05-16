@@ -19,14 +19,27 @@ public class NamtblSpriteFactoryTest {
 	@Test
 	public void testExample() throws IOException {
 
-		this.asserts(this.factory().create(3, 3, Alignment.CENTER));
+		this.asserts(this.factory().create(3, 3, Alignment.DEFAULT));
 	}
 
 	@Test
-	public void testExampleCenterOff() throws IOException {
+	public void testExampleLeft() throws IOException {
 
 		this.asserts(this.factory().create(3, 3, Alignment.LEFT));
 	}
+
+	@Test
+	public void testExampleAligned() throws IOException {
+
+		this.asserts(this.factory().create(3, 3, Alignment.ALIGNED));
+	}
+
+	@Test
+	public void testExampleRight() throws IOException {
+
+		this.asserts(this.factory().create(3, 3, Alignment.RIGHT));
+	}
+
 	private NamtblSpriteFactory factory() throws IOException {
 
 		final RawData rawData = new TmxReader(new ClassPathResource("example.tmx")).read();

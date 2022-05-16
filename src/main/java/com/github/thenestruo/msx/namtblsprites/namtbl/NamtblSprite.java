@@ -23,11 +23,14 @@ public class NamtblSprite {
 	/** NAMTBL sprite alignment and drawing direciton */
 	public static enum Alignment {
 
+		/** Default (centered), draw to right */
+		DEFAULT(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator)),
+
 		/** Aligned left, draw to right */
 		LEFT(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator)),
 
-		/** Centered, draw to right */
-		CENTER(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator)),
+		/** Aligned to center (alt. entry points for even widths), draw to right */
+		ALIGNED(Coord.bottomUpComparator.thenComparing(Coord.leftToRightComparator)),
 
 		/** Aligned right, draw to left */
 		RIGHT(Coord.bottomUpComparator.thenComparing(Coord.rightToLeftComparator));
@@ -88,8 +91,8 @@ public class NamtblSprite {
 
 			final List<Char> lSequence = new ArrayList<>();
 			int x = alignment == Alignment.LEFT ? 0
-					: alignment == Alignment.CENTER ? Math.floorDiv(width - 1, 2)
-					: pWidth -1;
+					: alignment == Alignment.RIGHT ? pWidth -1
+					: Math.floorDiv(width - 1, 2);
 			int y = pHeight -1;
 			for (Char c : chars) {
 				final int diffX = c.getX() - x;
@@ -164,7 +167,7 @@ public class NamtblSprite {
 
 	private List<String> asmHeader() {
 
-		if (alignment != Alignment.CENTER) {
+		if (alignment != Alignment.ALIGNED) {
 			return Collections.singletonList(String.format(".%s:", this.spriteId));
 		}
 
