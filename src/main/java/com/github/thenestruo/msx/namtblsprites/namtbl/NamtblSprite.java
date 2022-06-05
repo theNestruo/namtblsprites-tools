@@ -167,17 +167,33 @@ public class NamtblSprite {
 
 	private List<String> asmHeader() {
 
-		if (alignment != Alignment.ALIGNED) {
-			return Collections.singletonList(String.format(".%s:", this.spriteId));
-		}
+		switch (alignment) {
+			case DEFAULT:
+			{
+				final List<String> lines = new ArrayList<>();
+				lines.add(String.format(".%s:", this.spriteId));
+				if (this.width % 2 == 0) {
+					lines.add(indent("dec de ; (even width centering)"));
+				}
+				return lines;
+			}
 
-		final List<String> lines = new ArrayList<>();
-		lines.add(String.format(".%s_L:", this.spriteId));
-		if (this.width % 2 == 0) {
-			lines.add(indent("dec de ; (-1, 0)"));
+			case ALIGNED:
+			{
+				final List<String> lines = new ArrayList<>();
+				lines.add(String.format(".%s_L:", this.spriteId));
+				if (this.width % 2 == 0) {
+					lines.add(indent("dec de ; (-1, 0)"));
+				}
+				lines.add(String.format(".%s_R:", this.spriteId));
+				return lines;
+			}
+
+			case LEFT:
+			case RIGHT:
+			default:
+				return Collections.singletonList(String.format(".%s:", this.spriteId));
 		}
-		lines.add(String.format(".%s_R:", this.spriteId));
-		return lines;
 	}
 
 	/**
