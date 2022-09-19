@@ -22,7 +22,7 @@
 		<jackson.version>2.13.4</jackson.version>
 		<jakarta.xml.bind.version>4.0.0</jakarta.xml.bind.version>
 		<junit.version>4.13.2</junit.version>
-		<logback.version>1.4.0</logback.version>
+		<logback.version>1.4.1</logback.version>
 		<spotbugs.version>4.7.2</spotbugs.version>
 
 		<maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
