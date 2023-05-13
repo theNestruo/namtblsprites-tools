@@ -10,13 +10,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.github.thenestruo.msx.namtblsprites.model.RawData;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite.Alignment;
-import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
-import com.github.thenestruo.util.FileSystemResource;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -30,6 +23,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.thenestruo.msx.namtblsprites.model.RawData;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteNoLdiImpl;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
+import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
+import com.github.thenestruo.util.FileSystemResource;
 
 import ch.qos.logback.classic.Level;
 
@@ -48,14 +50,14 @@ public class Tmx2NamtblSpritesApp {
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
-	public static void main(String[] args) throws ParseException, IOException {
+	public static void main(final String[] args) throws ParseException, IOException {
 
 		// Parses the command line
 		final Options options = options();
 		final CommandLine command;
 		try {
 			command = new DefaultParser().parse(options, args);
-		} catch (MissingOptionException e) {
+		} catch (final MissingOptionException e) {
 			showUsage(options);
 			return;
 		}
@@ -76,7 +78,7 @@ public class Tmx2NamtblSpritesApp {
 		logger.debug("Tiled TMX file read: {}x{}", rawData.getWidth(), rawData.getHeight());
 
 		// Builds the NAMTBL sprites
-		final List<NamtblSprite> namtblSprites = toNamtblSprites(inputFilePath, rawData, command);
+		final List<? extends NamtblSprite> namtblSprites = toNamtblSprites(inputFilePath, rawData, command);
 		logger.debug("{} NAMTBL sprites read", namtblSprites.size());
 
 		// Writes the ASM file
@@ -154,28 +156,35 @@ public class Tmx2NamtblSpritesApp {
 		return Pair.of(path, rawData);
 	}
 
-	private static List<NamtblSprite> toNamtblSprites(
+	private static List<? extends NamtblSprite> toNamtblSprites(
 			final String path, final RawData rawData, final CommandLine command) throws ParseException {
 
 		final short blankValue = (short) Integer.parseUnsignedInt(command.getOptionValue(BLANK, "0"));
 		final short addend = (short) Integer.parseUnsignedInt(command.getOptionValue(ADD, "0"));
 		final String spriteName = command.getOptionValue(NAME, StringUtils.upperCase(FilenameUtils.getBaseName(path)));
 
-		NamtblSpriteFactory factory = new NamtblSpriteFactory(rawData, blankValue, addend, spriteName);
+		final NamtblSpriteAlignment alignment =
+				command.hasOption(LEFT) ? NamtblSpriteAlignment.LEFT
+				: command.hasOption(RIGHT) ? NamtblSpriteAlignment.RIGHT
+				: command.hasOption(ALIGN) ? NamtblSpriteAlignment.ALIGNED
+				: NamtblSpriteAlignment.DEFAULT;
 
-		final int spriteWidth = Integer.parseUnsignedInt(command.getOptionValue(WIDTH, Integer.toString(rawData.getWidth())));
-		final int spriteHeight = Integer.parseUnsignedInt(command.getOptionValue(HEIGHT, Integer.toString(rawData.getHeight())));
-		final Alignment alignment =
-				command.hasOption(LEFT) ? Alignment.LEFT
-				: command.hasOption(RIGHT) ? Alignment.RIGHT
-				: command.hasOption(ALIGN) ? Alignment.ALIGNED
-				: Alignment.DEFAULT;
+		// final NamtblSpriteFactory<?> factory = new NamtblSpriteDefaultImpl.Factory(alignment);
+		final NamtblSpriteFactory<?> factory = new NamtblSpriteNoLdiImpl.Factory(alignment);
 
-		return factory.create(spriteWidth, spriteHeight, alignment);
+		final NamtblSpritesExtractor<?> extractor =
+				new NamtblSpritesExtractor<>(factory, rawData, blankValue, addend, spriteName);
+
+		final int spriteWidth = Integer.parseUnsignedInt(
+				command.getOptionValue(WIDTH, Integer.toString(rawData.getWidth())));
+		final int spriteHeight = Integer.parseUnsignedInt(
+				command.getOptionValue(HEIGHT, Integer.toString(rawData.getHeight())));
+
+		return extractor.extractFrom(spriteWidth, spriteHeight);
 	}
 
 	private static void writeAsmFile(
-			final String path, final List<NamtblSprite> sprites, final CommandLine command) throws IOException {
+			final String path, final List<? extends NamtblSprite> sprites, final CommandLine command) throws IOException {
 
 		final File file = new File(path);
 		if (file.exists()) {
@@ -183,13 +192,13 @@ public class Tmx2NamtblSpritesApp {
 		}
 
 		try (final Writer writer = IOUtils.buffer(new FileWriter(file, Charset.defaultCharset()))) {
-			for (NamtblSprite sprite : sprites) {
+			for (final NamtblSprite sprite : sprites) {
 				IOUtils.writeLines(sprite.asAsm(), System.lineSeparator(), writer);
 			}
 		}
 	}
 
-	private static String nextPath(CommandLine command, String defaultValue) {
+	private static String nextPath(final CommandLine command, final String defaultValue) {
 
 		final List<String> argList = command.getArgList();
 		return argList.isEmpty() ? defaultValue : argList.remove(0);
