@@ -15,49 +15,62 @@ public class NamtblSpritesExtractorTest {
 	@Test
 	public void testExample() throws IOException {
 
-		this.asserts(this.extractor(this.defaultFactory(NamtblSpriteAlignment.DEFAULT)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.oldFactory(NamtblSpriteAlignment.DEFAULT)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleLeft() throws IOException {
 
-		this.asserts(this.extractor(this.defaultFactory(NamtblSpriteAlignment.LEFT)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.oldFactory(NamtblSpriteAlignment.LEFT)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleAligned() throws IOException {
 
-		this.asserts(this.extractor(this.defaultFactory(NamtblSpriteAlignment.ALIGNED)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.oldFactory(NamtblSpriteAlignment.ALIGNED)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleRight() throws IOException {
 
-		this.asserts(this.extractor(this.defaultFactory(NamtblSpriteAlignment.RIGHT)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.oldFactory(NamtblSpriteAlignment.RIGHT)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleNoLdi() throws IOException {
 
-		this.asserts(this.extractor(this.noLdiFactory(NamtblSpriteAlignment.DEFAULT)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.DEFAULT)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleLeftNoLdi() throws IOException {
 
-		this.asserts(this.extractor(this.noLdiFactory(NamtblSpriteAlignment.LEFT)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.LEFT)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleAlignedNoLdi() throws IOException {
 
-		this.asserts(this.extractor(this.noLdiFactory(NamtblSpriteAlignment.ALIGNED)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.ALIGNED)).extractFrom(3, 3));
 	}
 
 	@Test
 	public void testExampleRightNoLdi() throws IOException {
 
-		this.asserts(this.extractor(this.noLdiFactory(NamtblSpriteAlignment.RIGHT)).extractFrom(3, 3));
+		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.RIGHT)).extractFrom(3, 3));
+	}
+
+	@SuppressWarnings("deprecation")
+	private NamtblSpriteFactory<NamtblSpriteOldImpl> oldFactory(
+			final NamtblSpriteAlignment alignment) {
+
+		return new NamtblSpriteOldImplFactory(alignment);
+	}
+
+	private NamtblSpriteFactory<NamtblSpriteImpl> factory(
+			final NamtblSpriteAlignment alignment) {
+
+		return new NamtblSpriteImplFactory(alignment);
 	}
 
 	private <S extends NamtblSprite> NamtblSpritesExtractor<S> extractor(
@@ -66,16 +79,6 @@ public class NamtblSpritesExtractorTest {
 		final RawData rawData = new TmxReader(new ClassPathResource("example.tmx")).read();
 		return new NamtblSpritesExtractor<>(
 				factory, rawData, (short) 64, (short) 0, "EXAMPLE");
-	}
-
-	private NamtblSpriteFactory<NamtblSpriteDefaultImpl> defaultFactory(
-			final NamtblSpriteAlignment alignment) {
-		return new NamtblSpriteDefaultImpl.Factory(alignment);
-	}
-
-	private NamtblSpriteFactory<NamtblSpriteNoLdiImpl> noLdiFactory(
-			final NamtblSpriteAlignment alignment) {
-		return new NamtblSpriteNoLdiImpl.Factory(alignment);
 	}
 
 	private <S extends NamtblSprite> void asserts(final List<S> sprites) {

@@ -10,7 +10,7 @@ import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.RawSprite;
 
 /**
- * An extractor of {@link NamtblSpriteDefaultImpl NAMTBL sprites}
+ * An extractor of {@link NamtblSpriteOldImpl NAMTBL sprites}
  * from a bidimensional chunk of raw data
  */
 public class NamtblSpritesExtractor<S extends NamtblSprite> {
@@ -42,7 +42,7 @@ public class NamtblSpritesExtractor<S extends NamtblSprite> {
 	}
 
 	/**
-	 * Builds the {@link NamtblSpriteDefaultImpl NAMTBL sprites}
+	 * Builds the {@link NamtblSpriteOldImpl NAMTBL sprites}
 	 * @param width the width of the sprites
 	 * @param height the width of the sprites
 	 * @return the NAMTBL sprites in top to down, then left to right, order

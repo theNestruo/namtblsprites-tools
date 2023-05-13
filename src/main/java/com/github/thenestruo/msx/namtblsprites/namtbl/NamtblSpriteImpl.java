@@ -7,32 +7,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.github.thenestruo.msx.namtblsprites.model.Char;
 
 /**
- * A NAMTBL sprite that can be read as asm code
+ * NamtblSprite default implementation
  */
-public class NamtblSpriteDefaultImpl implements NamtblSprite {
-
-	public static class Factory implements NamtblSpriteFactory<NamtblSpriteDefaultImpl> {
-
-		private final NamtblSpriteAlignment alignment;
-
-		public Factory(final NamtblSpriteAlignment alignment) {
-			super();
-
-			this.alignment = alignment;
-		}
-
-		@Override
-		public NamtblSpriteDefaultImpl instance(final String spriteId, final List<Char> chars, final int width, final int height) {
-			return new NamtblSpriteDefaultImpl(spriteId, chars, width, height, this.alignment);
-		}
-	}
+public class NamtblSpriteImpl implements NamtblSprite {
 
 	private final String spriteId;
 	private final NamtblSpriteAlignment alignment;
@@ -48,7 +31,7 @@ public class NamtblSpriteDefaultImpl implements NamtblSprite {
 	 * @param pHeight the height of the sprites
 	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
 	 */
-	public NamtblSpriteDefaultImpl(final String spriteId,
+	public NamtblSpriteImpl(final String spriteId,
 			final List<Char> pChars, final int pWidth, final int pHeight,
 			final NamtblSpriteAlignment pAlignment) {
 		super();
@@ -91,7 +74,7 @@ public class NamtblSpriteDefaultImpl implements NamtblSprite {
 				final int diffX = c.getX() - x;
 				final int diffY = c.getY() - y;
 				lSequence.add(new Char(diffX, diffY, c.getValue()));
-				x = c.getX() + (this.alignment == NamtblSpriteAlignment.RIGHT ? -1 : 1);
+				x = c.getX();
 				y = c.getY();
 			}
 			this.sequence = Collections.unmodifiableList(lSequence);
@@ -121,12 +104,9 @@ public class NamtblSpriteDefaultImpl implements NamtblSprite {
 
 			// Source code
 			lines.addAll(this.asmHeader());
-			lines.add(indent(String.format("ld hl, .%s_DATA", this.spriteId)));
+			lines.add(indent("ex de, hl"));
 			lines.addAll(indent(this.asmInstructions()));
 			lines.add(indent("ret"));
-			lines.addAll(this.alignment != NamtblSpriteAlignment.RIGHT
-					? this.asmDataLeft()
-					: this.asmDataRight());
 		}
 
 		return lines;
@@ -198,7 +178,7 @@ public class NamtblSpriteDefaultImpl implements NamtblSprite {
 		final List<String> lines = new ArrayList<>();
 		for (final Char c : this.sequence) {
 			lines.addAll(this.asmOffsetInstructions(c));
-			lines.add(this.alignment == NamtblSpriteAlignment.RIGHT ? "ldd" : "ldi");
+			lines.add(String.format("ld [hl], %s", asmByte(c)));
 		}
 		return lines;
 	}
@@ -213,41 +193,18 @@ public class NamtblSpriteDefaultImpl implements NamtblSprite {
 					? Collections.emptyList()
 					: Collections.nCopies(
 							Math.abs(x),
-							x > 0 ? "inc de ; (+1, 0)" : "dec de ; (-1, 0)");
+							x > 0 ? "inc hl ; (+1, 0)" : "dec hl ; (-1, 0)");
 		}
 
 		final String offset =
 				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", -x, -y);
 
 		return Arrays.asList(
-				"ld a, e",
+				"ld a, l",
 				String.format("sub %s ; (%+d, %+d)", offset, x, y),
-				"ld e, a",
+				"ld l, a",
 				"jp nc, $+4",
-				"dec d");
-	}
-
-	private List<String> asmDataLeft() {
-
-		final List<String> lines = new ArrayList<>();
-		lines.add(String.format(".%s_DATA:", this.spriteId));
-		for (final List<Char> partition : ListUtils.partition(this.sequence, 8)) {
-			lines.add(indent("db " + String.join(", ", asmBytes(partition))));
-		}
-		return lines;
-	}
-
-	private List<String> asmDataRight() {
-
-		final List<Char> reversedSequence = new ArrayList<>(this.sequence);
-		Collections.reverse(reversedSequence);
-
-		final List<String> lines = new ArrayList<>();
-		for (final List<Char> partition : ListUtils.partition(reversedSequence, 8)) {
-			lines.add(indent("db " + String.join(", ", asmBytes(partition))));
-		}
-		lines.add(String.format(".%s_DATA: equ $ - 1", this.spriteId));
-		return lines;
+				"dec h");
 	}
 
 	/*
@@ -260,10 +217,6 @@ public class NamtblSpriteDefaultImpl implements NamtblSprite {
 
 	private static String indent(final String s) {
 		return StringUtils.prependIfMissing(s, "\t");
-	}
-
-	private static List<String> asmBytes(final List<Char> list) {
-		return list.stream().map(c -> asmByte(c)).collect(Collectors.toList());
 	}
 
 	private static String asmByte(final Char c) {
