@@ -11,13 +11,13 @@ import jakarta.xml.bind.annotation.XmlAttribute;
 class Tmx {
 
 	@XmlAttribute(name = "tileset")
-	private Tileset tileset;
+	private TmxTileset tileset;
 
 	@XmlAttribute(name = "layer")
-	private Layer layer;
+	private TmxLayer layer;
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Tileset {
+	public static class TmxTileset {
 
 		@XmlAttribute(name = "tilecount")
 		private int tileCount;
@@ -32,36 +32,36 @@ class Tmx {
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Layer {
+	public static class TmxLayer {
 
 		private int width;
 
 		private int height;
 
 		@XmlAttribute(name = "data")
-		private Data data;
+		private TmxData data;
 
 		/**
 		 * Default constructor
 		 */
-		public Layer() {
+		public TmxLayer() {
 			super();
 		}
 
 		/**
 		 * Copy constructor
-		 * @param that Data
+		 * @param that TmxData
 		 */
-		private Layer(Layer that) {
+		private TmxLayer(TmxLayer that) {
 			this();
 
 			this.width = that.width;
 			this.height = that.height;
-			this.data = new Data(that.data);
+			this.data = new TmxData(that.data);
 		}
 
 		@JsonIgnoreProperties(ignoreUnknown = true)
-		public static class Data {
+		public static class TmxData {
 
 			@JacksonXmlText
 			private String csv;
@@ -69,15 +69,15 @@ class Tmx {
 			/**
 			 * Default constructor
 			 */
-			public Data() {
+			public TmxData() {
 				super();
 			}
 
 			/**
 			 * Copy constructor
-			 * @param that Data
+			 * @param that TmxData
 			 */
-			private Data(Data that) {
+			private TmxData(TmxData that) {
 				this();
 				this.csv = that.csv;
 			}
@@ -107,28 +107,28 @@ class Tmx {
 			this.height = height;
 		}
 
-		public Data getData() {
-			return data != null ? new Data(data) : null;
+		public TmxData getData() {
+			return data != null ? new TmxData(data) : null;
 		}
 
-		public void setData(Data data) {
-			this.data = data != null ? new Data(data) : null;
+		public void setData(TmxData data) {
+			this.data = data != null ? new TmxData(data) : null;
 		}
 	}
 
-	public Tileset getTileset() {
+	public TmxTileset getTileset() {
 		return tileset;
 	}
 
-	public void setTileset(Tileset tileset) {
+	public void setTileset(TmxTileset tileset) {
 		this.tileset = tileset;
 	}
 
-	public Layer getLayer() {
-		return layer != null ? new Layer(layer) : null;
+	public TmxLayer getLayer() {
+		return layer != null ? new TmxLayer(layer) : null;
 	}
 
-	public void setLayer(Layer layer) {
-		this.layer = layer != null ? new Layer(layer) : null;
+	public void setLayer(TmxLayer layer) {
+		this.layer = layer != null ? new TmxLayer(layer) : null;
 	}
 }

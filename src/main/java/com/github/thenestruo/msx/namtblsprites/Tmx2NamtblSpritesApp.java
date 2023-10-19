@@ -155,7 +155,7 @@ public class Tmx2NamtblSpritesApp {
 			return Pair.of(path, null);
 		}
 
-		logger.debug("Data will be read from Tiled TMX input file {}", file.getAbsolutePath());
+		logger.debug("TmxData will be read from Tiled TMX input file {}", file.getAbsolutePath());
 		final RawData rawData = new TmxReader(new FileSystemResource(file)).read();
 		return Pair.of(path, rawData);
 	}

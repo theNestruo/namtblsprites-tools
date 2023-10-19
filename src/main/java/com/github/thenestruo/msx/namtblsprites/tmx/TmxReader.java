@@ -34,7 +34,7 @@ public class TmxReader {
 
 			// final int tileCount = tmx.getTileset().getTileCount();
 
-			final Tmx.Layer layer = tmx.getLayer();
+			final Tmx.TmxLayer layer = tmx.getLayer();
 			final int width = layer.getWidth();
 			final int height = layer.getHeight();
 
