@@ -3,6 +3,7 @@ package com.github.thenestruo.msx.namtblsprites.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.Validate;
 
@@ -24,7 +25,7 @@ public class RawData {
 	public RawData(final List<Short> data, final int width, final int height) {
 		super();
 
-		this.data = Validate.notNull(data);
+		this.data = Collections.unmodifiableList(Objects.requireNonNull(data));
 
 		Validate.isTrue(data.size() == width * height);
 		this.width = width;

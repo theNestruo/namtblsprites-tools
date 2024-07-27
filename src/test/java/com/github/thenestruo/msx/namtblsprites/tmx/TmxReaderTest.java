@@ -13,7 +13,7 @@ class TmxReaderTest {
 	@Test
 	void doTest() throws IOException {
 
-		final RawData rawData = new TmxReader(new ClassPathResource("example.tmx")).read();
+		final RawData rawData = new TmxReader(ClassPathResource.from("example.tmx")).read();
 		Assertions.assertNotNull(rawData);
 		Assertions.assertNotNull(rawData.getData());
 		Assertions.assertEquals(3, rawData.getWidth());

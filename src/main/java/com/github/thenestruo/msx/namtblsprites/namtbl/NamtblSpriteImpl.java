@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +40,7 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		this.spriteId = Validate.notBlank(spriteId);
 		this.alignment = pAlignment;
 
-		Validate.notNull(pChars);
+		Objects.requireNonNull(pChars);
 		Validate.isTrue(!pChars.isEmpty());
 
 		// Width / Height
@@ -188,7 +189,7 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		final int x = c.getX();
 		final int y = c.getY();
 
-		if (y == 0) {
+		if ((y == 0) && (Math.abs(x) <= 3)) {
 			return (x == 0)
 					? Collections.emptyList()
 					: Collections.nCopies(
@@ -197,14 +198,11 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		}
 
 		final String offset =
-				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", -x, -y);
+				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", x, y);
 
 		return Arrays.asList(
-				"ld a, l",
-				String.format("sub %s ; (%+d, %+d)", offset, x, y),
-				"ld l, a",
-				"jp nc, $+4",
-				"dec h");
+				String.format("ld bc, %s ; (%+d, %+d)", offset, x, y),
+				"add hl, bc");
 	}
 
 	/*

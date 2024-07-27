@@ -11,6 +11,25 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  */
 public class ClassPathResource implements ReadableResource {
 
+	/**
+	 * Factory method
+	 * @param path the path of the classpath resource
+	 * @throws IOException if the classpath resource does not exists
+	 */
+	public static ClassPathResource from(String path) {
+
+		ClassPathResource instance = new ClassPathResource(path);
+
+		// Checks existence
+		try (InputStream is = instance.getInputStream()) {
+			return instance;
+
+		} catch (IOException e) {
+			return ExceptionUtils.rethrow(e);
+		}
+
+	}
+
 	private final String path;
 
 	/**
@@ -18,17 +37,10 @@ public class ClassPathResource implements ReadableResource {
 	 * @param path the path of the classpath resource
 	 * @throws IOException if the classpath resource does not exists
 	 */
-	public ClassPathResource(String path) {
+	private ClassPathResource(String path) {
 		super();
 
 		this.path = Validate.notBlank(path, "The path must not be null nor blank");
-
-		// Checks existence
-		try (InputStream is = this.getInputStream()) {
-			// (no-op)
-		} catch (IOException e) {
-			ExceptionUtils.rethrow(e);
-		}
 	}
 
 	@Override

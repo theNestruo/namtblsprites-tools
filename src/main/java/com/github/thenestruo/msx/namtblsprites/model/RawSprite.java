@@ -3,8 +3,7 @@ package com.github.thenestruo.msx.namtblsprites.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 /**
  * The raw data for a NAMTBL sprite
@@ -43,7 +42,7 @@ public class RawSprite {
 	private RawSprite(final List<Char> chars) {
 		super();
 
-		this.chars = Collections.unmodifiableList(Validate.notNull(chars));
+		this.chars = Collections.unmodifiableList(Objects.requireNonNull(chars));
 	}
 
 	public List<Char> getChars() {

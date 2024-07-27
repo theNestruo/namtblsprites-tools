@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -11,7 +12,6 @@ import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.util.ReadableResource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Validate;
 
 /**
  * Reads a Tiled {@code .tmx} file
@@ -23,7 +23,7 @@ public class TmxReader {
 	public TmxReader(final ReadableResource source) {
 		super();
 
-		this.source = Validate.notNull(source, "The source must not be null");
+		this.source = Objects.requireNonNull(source, "The source must not be null");
 	}
 
 	public RawData read() throws IOException {

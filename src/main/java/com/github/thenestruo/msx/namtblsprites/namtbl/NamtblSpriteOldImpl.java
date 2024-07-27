@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.ListUtils;
@@ -42,7 +43,7 @@ public class NamtblSpriteOldImpl implements NamtblSprite {
 		this.spriteId = Validate.notBlank(spriteId);
 		this.alignment = pAlignment;
 
-		Validate.notNull(pChars);
+		Objects.requireNonNull(pChars);
 		Validate.isTrue(!pChars.isEmpty());
 
 		// Width / Height

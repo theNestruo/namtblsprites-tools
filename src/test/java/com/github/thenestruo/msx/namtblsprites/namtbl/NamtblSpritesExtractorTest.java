@@ -76,7 +76,7 @@ public class NamtblSpritesExtractorTest {
 	private <S extends NamtblSprite> NamtblSpritesExtractor<S> extractor(
 			final NamtblSpriteFactory<S> factory) throws IOException {
 
-		final RawData rawData = new TmxReader(new ClassPathResource("example.tmx")).read();
+		final RawData rawData = new TmxReader(ClassPathResource.from("example.tmx")).read();
 		return new NamtblSpritesExtractor<>(
 				factory, rawData, (short) 64, (short) 0, "EXAMPLE");
 	}

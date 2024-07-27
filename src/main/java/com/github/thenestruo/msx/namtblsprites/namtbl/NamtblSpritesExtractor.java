@@ -2,15 +2,14 @@ package com.github.thenestruo.msx.namtblsprites.namtbl;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
 
 import com.github.thenestruo.msx.namtblsprites.model.Char;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.RawSprite;
 
 /**
- * An extractor of {@link NamtblSpriteOldImpl NAMTBL sprites}
+ * An extractor of {@link NamtblSprite NAMTBL sprites}
  * from a bidimensional chunk of raw data
  */
 public class NamtblSpritesExtractor<S extends NamtblSprite> {
@@ -34,15 +33,15 @@ public class NamtblSpritesExtractor<S extends NamtblSprite> {
 			final short blankValue, final short addend, final String spriteName) {
 		super();
 
-		this.factory = Validate.notNull(factory);
-		this.data = Validate.notNull(data);
+		this.factory = Objects.requireNonNull(factory);
+		this.data = Objects.requireNonNull(data);
 		this.blankValue = blankValue;
 		this.addend = addend;
-		this.spriteName = Validate.notNull(spriteName);
+		this.spriteName = Objects.requireNonNull(spriteName);
 	}
 
 	/**
-	 * Builds the {@link NamtblSpriteOldImpl NAMTBL sprites}
+	 * Builds the {@link NamtblSprite NAMTBL sprites}
 	 * @param width the width of the sprites
 	 * @param height the width of the sprites
 	 * @return the NAMTBL sprites in top to down, then left to right, order

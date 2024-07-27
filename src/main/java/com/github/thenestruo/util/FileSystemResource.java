@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Objects;
 
 import org.apache.commons.lang3.Validate;
 
@@ -29,7 +30,7 @@ public class FileSystemResource implements ReadableResource {
 	public FileSystemResource(File file) {
 		super();
 
-		this.file = Validate.notNull(file, "The file must not be null");
+		this.file = Objects.requireNonNull(file, "The file must not be null");
 	}
 
 	@Override
