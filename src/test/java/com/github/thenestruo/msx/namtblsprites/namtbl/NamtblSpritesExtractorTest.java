@@ -7,6 +7,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
+import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteImpl;
+import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteFactoryImpl;
+import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteLdiLddImpl;
+import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteLdiLddFactoryImpl;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.ClassPathResource;
 
@@ -61,16 +65,16 @@ public class NamtblSpritesExtractorTest {
 	}
 
 	@SuppressWarnings("deprecation")
-	private NamtblSpriteFactory<NamtblSpriteOldImpl> oldFactory(
+	private NamtblSpriteFactory<NamtblSpriteLdiLddImpl> oldFactory(
 			final NamtblSpriteAlignment alignment) {
 
-		return new NamtblSpriteOldImplFactory(alignment);
+		return new NamtblSpriteLdiLddFactoryImpl(alignment);
 	}
 
 	private NamtblSpriteFactory<NamtblSpriteImpl> factory(
 			final NamtblSpriteAlignment alignment) {
 
-		return new NamtblSpriteImplFactory(alignment);
+		return new NamtblSpriteFactoryImpl(alignment);
 	}
 
 	private <S extends NamtblSprite> NamtblSpritesExtractor<S> extractor(

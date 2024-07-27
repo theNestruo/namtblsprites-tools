@@ -1,14 +1,16 @@
-package com.github.thenestruo.msx.namtblsprites.namtbl;
+package com.github.thenestruo.msx.namtblsprites.namtbl.impl;
 
 import java.util.List;
 
 import com.github.thenestruo.msx.namtblsprites.model.Char;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
 
-public class NamtblSpriteImplFactory implements NamtblSpriteFactory<NamtblSpriteImpl> {
+public class NamtblSpriteFactoryImpl implements NamtblSpriteFactory<NamtblSpriteImpl> {
 
 	private final NamtblSpriteAlignment alignment;
 
-	public NamtblSpriteImplFactory(final NamtblSpriteAlignment alignment) {
+	public NamtblSpriteFactoryImpl(final NamtblSpriteAlignment alignment) {
 		super();
 
 		this.alignment = alignment;

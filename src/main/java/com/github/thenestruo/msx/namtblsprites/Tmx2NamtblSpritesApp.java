@@ -28,9 +28,9 @@ import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteImplFactory;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteOldImplFactory;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
+import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteFactoryImpl;
+import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteLdiLddFactoryImpl;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.FileSystemResource;
 
@@ -174,8 +174,8 @@ public class Tmx2NamtblSpritesApp {
 				: NamtblSpriteAlignment.DEFAULT;
 
 		final NamtblSpriteFactory<?> factory = command.hasOption(OLD)
-				? new NamtblSpriteOldImplFactory(alignment)
-				: new NamtblSpriteImplFactory(alignment);
+				? new NamtblSpriteLdiLddFactoryImpl(alignment)
+				: new NamtblSpriteFactoryImpl(alignment);
 
 		final NamtblSpritesExtractor<?> extractor =
 				new NamtblSpritesExtractor<>(factory, rawData, blankValue, addend, spriteName);
