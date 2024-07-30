@@ -21,11 +21,6 @@ jobs:
             "username": "theNestruo",
             "password": "${{ secrets.THENESTRUO_PARENT_PASSWORD }}"
           }]
-        settings-repositories: |
-          [{
-            "id": "github-thenestruo-parent",
-            "url": "https://maven.pkg.github.com/theNestruo/thenestruo-parent"
-          }]
 
     - name: Verify
       run: mvn --batch-mode verify
