@@ -1,15 +1,10 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-name: Java CI with Maven
+name: Verify
 
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-  schedule:
-    - cron: '0 6 1 * *'
 
 jobs:
   build:
@@ -17,7 +12,7 @@ jobs:
 
     steps:
 
-    - name: Setup Maven Action
+    - name: Setup Maven
       uses: s4u/setup-maven-action@v1.14.0
       with:
         settings-servers: |
@@ -32,5 +27,5 @@ jobs:
             "url": "https://maven.pkg.github.com/theNestruo/thenestruo-parent"
           }]
 
-    - name: Build with Maven
-      run: mvn -B verify --file pom.xml
+    - name: Verify
+      run: mvn --batch-mode verify
