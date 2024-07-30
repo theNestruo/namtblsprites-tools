@@ -19,6 +19,18 @@ jobs:
 
     - name: Setup Maven Action
       uses: s4u/setup-maven-action@v1.14.0
+      with:
+        settings-servers: |
+          [{
+            "id": "github-thenestruo-parent",
+            "username": "theNestruo",
+            "password": "${{ secrets.THENESTRUO_PARENT_PASSWORD }}"
+          }]
+        settings-repositories: |
+          [{
+            "id": "github-thenestruo-parent",
+            "url": "https://maven.pkg.github.com/theNestruo/thenestruo-parent"
+          }]
 
     - name: Build with Maven
       run: mvn -B verify --file pom.xml
