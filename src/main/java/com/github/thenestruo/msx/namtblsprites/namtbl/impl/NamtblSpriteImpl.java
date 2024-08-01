@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -21,14 +22,16 @@ import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
  */
 public class NamtblSpriteImpl implements NamtblSprite {
 
+	private static final char[] OPTIMIZATION_REGISTER = new char[]{ 'a', 'd', 'e' };
+
 	private final String spriteId;
 	private final NamtblSpriteAlignment alignment;
 	private final int width;
 	private final int height;
 	private final List<Char> sequence;
 
-	private final Short optimizedA;
-	private String optimizedBC;
+	private final short[] optimizationValues;
+	private String previousOffset;
 
 	/**
 	 * Constructor
@@ -88,7 +91,9 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		}
 
 		{
-			final Iterator<Short> optimizations = pChars.stream()
+			this.optimizationValues = ArrayUtils.toPrimitive(
+					pChars
+					.stream()
 					.collect(Collectors.groupingBy(
 						c -> c.getValue(),
 						Collectors.counting()))
@@ -97,9 +102,8 @@ public class NamtblSpriteImpl implements NamtblSprite {
 					.filter(entry -> entry.getValue() >= 3)
 					.limit(3)
 					.map(Entry::getKey)
-					.iterator();
-
-			this.optimizedA = optimizations.hasNext() ? optimizations.next() : null;
+					.collect(Collectors.toList())
+					.toArray(new Short[0]));
 		}
 	}
 
@@ -118,6 +122,8 @@ public class NamtblSpriteImpl implements NamtblSprite {
 			if (this.height == 1) {
 				lines.addAll(indent(this.asmInstructions1x1()));
 			} else {
+				lines.add(indent("ex de, hl"));
+				lines.addAll(indent(this.asmPrepareOptimizations()));
 				lines.addAll(indent(this.asmInstructions1xN()));
 			}
 			lines.add(indent("ret"));
@@ -126,12 +132,8 @@ public class NamtblSpriteImpl implements NamtblSprite {
 
 			// Source code
 			lines.addAll(this.asmHeader());
-
-			if (this.optimizedA != null) {
-				lines.add(String.format("ld a, %s", asmByte(this.optimizedA)));
-			}
-
 			lines.add(indent("ex de, hl"));
+			lines.addAll(indent(this.asmPrepareOptimizations()));
 			lines.addAll(indent(this.asmInstructions()));
 			lines.add(indent("ret"));
 		}
@@ -158,14 +160,9 @@ public class NamtblSpriteImpl implements NamtblSprite {
 
 		final List<String> lines = new ArrayList<>();
 
-		if (this.optimizedA != null) {
-			lines.add(String.format("ld a, %s", asmByte(this.optimizedA)));
-		}
-
-		lines.add("ex de, hl");
 		lines.add("ld bc, -NAMTBL_BUFFER_WIDTH");
 		for (final Char c : this.sequence) {
-			lines.addAll(Collections.nCopies(-c.getY(), "add hl, bc"));
+			lines.addAll(Collections.nCopies(-c.getY(), "add hl, bc ; (0, -1)"));
 			lines.add(String.format("ld [hl], %s", asmByte(c)));
 		}
 		return lines;
@@ -202,6 +199,17 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		}
 	}
 
+	private List<String> asmPrepareOptimizations() {
+
+		List<String> lines = new ArrayList<>();
+		for (int i = 0, n = this.optimizationValues.length; i < n; i++) {
+			lines.add(String.format("ld %s, %s",
+					OPTIMIZATION_REGISTER[i],
+					asmByte(this.optimizationValues[i])));
+		}
+		return lines;
+	}
+
 	/**
 	 * @return the asm lines of code to render this particular sprite
 	 */
@@ -231,15 +239,16 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		final String offset =
 				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", x, y);
 
-		if (StringUtils.equals(offset, this.optimizedBC)) {
+		if (StringUtils.equals(offset, this.previousOffset)) {
 			return Collections.singletonList(
 				String.format("add hl, bc ; (%+d, %+d)", x, y));
-		}
 
-		this.optimizedBC = offset;
-		return Arrays.asList(
-				String.format("ld bc, %s ; (%+d, %+d)", offset, x, y),
-				"add hl, bc");
+		} else {
+			this.previousOffset = offset;
+			return Arrays.asList(
+					String.format("ld bc, %s ; (%+d, %+d)", offset, x, y),
+					"add hl, bc");
+		}
 	}
 
 	/*
@@ -257,8 +266,9 @@ public class NamtblSpriteImpl implements NamtblSprite {
 	private String asmByte(final Char c) {
 
 		final short value = c.getValue();
-		return this.optimizedA != null && (this.optimizedA.shortValue() == value)
-				? "a"
+		final int optimizationIndex = ArrayUtils.indexOf(this.optimizationValues, value);
+		return optimizationIndex >= 0
+				? Character.toString(OPTIMIZATION_REGISTER[optimizationIndex])
 				: asmByte(c.getValue());
 	}
 

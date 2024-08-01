@@ -30,13 +30,11 @@ import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
 import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteFactoryImpl;
-import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteLdiLddFactoryImpl;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.FileSystemResource;
 
 import ch.qos.logback.classic.Level;
 
-@SuppressWarnings("deprecation")
 public class Tmx2NamtblSpritesApp {
 
 	private static final String HELP = "help";
@@ -49,7 +47,6 @@ public class Tmx2NamtblSpritesApp {
 	private static final String LEFT = "left";
 	private static final String RIGHT = "right";
 	private static final String ALIGN = "align";
-	private static final String OLD = "old";
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
@@ -104,7 +101,6 @@ public class Tmx2NamtblSpritesApp {
 		options.addOption(LEFT, "Align left, draw to right");
 		options.addOption(RIGHT, "Align right, draw to left");
 		options.addOption(ALIGN, "Align center, draw to right (alt. entry points for even widths)");
-		options.addOption(OLD, "use old algorithm (LDI/LDD-based)");
 		return options;
 	}
 
@@ -173,9 +169,8 @@ public class Tmx2NamtblSpritesApp {
 				: command.hasOption(ALIGN) ? NamtblSpriteAlignment.ALIGNED
 				: NamtblSpriteAlignment.DEFAULT;
 
-		final NamtblSpriteFactory<?> factory = command.hasOption(OLD)
-				? new NamtblSpriteLdiLddFactoryImpl(alignment)
-				: new NamtblSpriteFactoryImpl(alignment);
+		final NamtblSpriteFactory<?> factory =
+				new NamtblSpriteFactoryImpl(alignment);
 
 		final NamtblSpritesExtractor<?> extractor =
 				new NamtblSpritesExtractor<>(factory, rawData, blankValue, addend, spriteName);

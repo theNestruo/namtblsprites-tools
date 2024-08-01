@@ -1,51 +1,114 @@
 .EXAMPLE_0:
-	ld a, $1f
-	ld (de), a
+	ex de, hl
+	ld a, $3f
+	dec hl ; (-1, 0)
+	ld [hl], $1f
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	ld bc, -2 -1*NAMTBL_BUFFER_WIDTH  ; (-2, -1)
+	add hl, bc
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	add hl, bc ; (-2, -1)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
 	ret
 .EXAMPLE_1:
-	ld a, $1e
-	ld (de), a
+	ex de, hl
+	ld a, $3f
+	dec hl ; (-1, 0)
+	ld [hl], $1e
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	ld bc, -2 -1*NAMTBL_BUFFER_WIDTH  ; (-2, -1)
+	add hl, bc
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	add hl, bc ; (-2, -1)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
 	ret
 .EXAMPLE_2:
-	ld a, $1d
-	ld (de), a
+	ex de, hl
+	ld a, $3f
+	dec hl ; (-1, 0)
+	ld [hl], $1d
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	ld bc, -2 -1*NAMTBL_BUFFER_WIDTH  ; (-2, -1)
+	add hl, bc
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	add hl, bc ; (-2, -1)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
 	ret
 .EXAMPLE_3:
-	ld hl, .EXAMPLE_3_DATA
-	ldi
-	ldi
-	ld a, -1*NAMTBL_BUFFER_WIDTH -2 ; (-2, -1)
-	add e
-	ld e, a
-	jp nc, $+4
-	dec d
-	ldi
-	ldi
+	ex de, hl
+	ld a, $3f
+	dec hl ; (-1, 0)
+	ld [hl], $13
+	inc hl ; (+1, 0)
+	ld [hl], $14
+	inc hl ; (+1, 0)
+	ld [hl], a
+	ld bc, -2 -1*NAMTBL_BUFFER_WIDTH  ; (-2, -1)
+	add hl, bc
+	ld [hl], $1b
+	inc hl ; (+1, 0)
+	ld [hl], $1c
+	inc hl ; (+1, 0)
+	ld [hl], a
+	add hl, bc ; (-2, -1)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
+	inc hl ; (+1, 0)
+	ld [hl], a
 	ret
-.EXAMPLE_3_DATA:
-	db $13, $14, $1b, $1c
 .EXAMPLE_4:
-	ld hl, .EXAMPLE_4_DATA
-	ldi
-	ldi
-	ldi
-	ld a, -1*NAMTBL_BUFFER_WIDTH -3 ; (-3, -1)
-	add e
-	ld e, a
-	jp nc, $+4
-	dec d
-	ldi
-	ldi
-	ldi
-	ld a, -1*NAMTBL_BUFFER_WIDTH -3 ; (-3, -1)
-	add e
-	ld e, a
-	jp nc, $+4
-	dec d
-	ldi
-	ldi
-	ldi
+	ex de, hl
+	dec hl ; (-1, 0)
+	ld [hl], $10
+	inc hl ; (+1, 0)
+	ld [hl], $11
+	inc hl ; (+1, 0)
+	ld [hl], $12
+	ld bc, -2 -1*NAMTBL_BUFFER_WIDTH  ; (-2, -1)
+	add hl, bc
+	ld [hl], $15
+	inc hl ; (+1, 0)
+	ld [hl], $16
+	inc hl ; (+1, 0)
+	ld [hl], $17
+	add hl, bc ; (-2, -1)
+	ld [hl], $18
+	inc hl ; (+1, 0)
+	ld [hl], $19
+	inc hl ; (+1, 0)
+	ld [hl], $1a
 	ret
-.EXAMPLE_4_DATA:
-	db $10, $11, $12, $15, $16, $17, $18, $19
-	db $1a
