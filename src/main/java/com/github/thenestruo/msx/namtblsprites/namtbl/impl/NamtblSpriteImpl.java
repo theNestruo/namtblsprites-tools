@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,9 @@ public class NamtblSpriteImpl implements NamtblSprite {
 	private final int width;
 	private final int height;
 	private final List<Char> sequence;
+
+	private final Short optimizedA;
+	private String optimizedBC;
 
 	/**
 	 * Constructor
@@ -82,6 +86,21 @@ public class NamtblSpriteImpl implements NamtblSprite {
 			}
 			this.sequence = Collections.unmodifiableList(lSequence);
 		}
+
+		{
+			final Iterator<Short> optimizations = pChars.stream()
+					.collect(Collectors.groupingBy(
+						c -> c.getValue(),
+						Collectors.counting()))
+					.entrySet()
+					.stream()
+					.filter(entry -> entry.getValue() >= 3)
+					.limit(3)
+					.map(Entry::getKey)
+					.iterator();
+
+			this.optimizedA = optimizations.hasNext() ? optimizations.next() : null;
+		}
 	}
 
 	/**
@@ -94,7 +113,7 @@ public class NamtblSpriteImpl implements NamtblSprite {
 
 		if (this.width == 1) {
 
-			// Special cases: width == 1
+			// Source code for special cases: width == 1
 			lines.addAll(this.asmHeader());
 			if (this.height == 1) {
 				lines.addAll(indent(this.asmInstructions1x1()));
@@ -107,6 +126,11 @@ public class NamtblSpriteImpl implements NamtblSprite {
 
 			// Source code
 			lines.addAll(this.asmHeader());
+
+			if (this.optimizedA != null) {
+				lines.add(String.format("ld a, %s", asmByte(this.optimizedA)));
+			}
+
 			lines.add(indent("ex de, hl"));
 			lines.addAll(indent(this.asmInstructions()));
 			lines.add(indent("ret"));
@@ -132,9 +156,14 @@ public class NamtblSpriteImpl implements NamtblSprite {
 
 		System.err.println(this.sequence);
 
-		final List<String> lines = new ArrayList<>(Arrays.asList(
-				"ex de, hl",
-				"ld bc, -NAMTBL_BUFFER_WIDTH"));
+		final List<String> lines = new ArrayList<>();
+
+		if (this.optimizedA != null) {
+			lines.add(String.format("ld a, %s", asmByte(this.optimizedA)));
+		}
+
+		lines.add("ex de, hl");
+		lines.add("ld bc, -NAMTBL_BUFFER_WIDTH");
 		for (final Char c : this.sequence) {
 			lines.addAll(Collections.nCopies(-c.getY(), "add hl, bc"));
 			lines.add(String.format("ld [hl], %s", asmByte(c)));
@@ -202,6 +231,12 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		final String offset =
 				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", x, y);
 
+		if (StringUtils.equals(offset, this.optimizedBC)) {
+			return Collections.singletonList(
+				String.format("add hl, bc ; (%+d, %+d)", x, y));
+		}
+
+		this.optimizedBC = offset;
 		return Arrays.asList(
 				String.format("ld bc, %s ; (%+d, %+d)", offset, x, y),
 				"add hl, bc");
@@ -219,8 +254,12 @@ public class NamtblSpriteImpl implements NamtblSprite {
 		return StringUtils.prependIfMissing(s, "\t");
 	}
 
-	private static String asmByte(final Char c) {
-		return asmByte(c.getValue());
+	private String asmByte(final Char c) {
+
+		final short value = c.getValue();
+		return this.optimizedA != null && (this.optimizedA.shortValue() == value)
+				? "a"
+				: asmByte(c.getValue());
 	}
 
 	private static String asmByte(final short s) {
