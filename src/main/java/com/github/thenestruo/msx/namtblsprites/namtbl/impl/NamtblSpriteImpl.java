@@ -3,8 +3,10 @@ package com.github.thenestruo.msx.namtblsprites.namtbl.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -94,12 +96,11 @@ public class NamtblSpriteImpl implements NamtblSprite {
 			this.optimizationValues = ArrayUtils.toPrimitive(
 					pChars
 					.stream()
-					.collect(Collectors.groupingBy(
-						c -> c.getValue(),
-						Collectors.counting()))
+					.collect(Collectors.groupingBy(Char::getValue, Collectors.counting()))
 					.entrySet()
 					.stream()
 					.filter(entry -> entry.getValue() >= 3)
+					.sorted(Comparator.<Map.Entry<Short, Long>, Long> comparing(Entry::getValue).reversed())
 					.limit(3)
 					.map(Entry::getKey)
 					.collect(Collectors.toList())
@@ -203,9 +204,16 @@ public class NamtblSpriteImpl implements NamtblSprite {
 
 		List<String> lines = new ArrayList<>();
 		for (int i = 0, n = this.optimizationValues.length; i < n; i++) {
-			lines.add(String.format("ld %s, %s",
+			final short optimizationValue = this.optimizationValues[i];
+			final long optimizationOcurrences = this.sequence
+					.stream()
+					.map(Char::getValue)
+					.filter(v -> v.shortValue() == optimizationValue)
+					.count();
+			lines.add(String.format("ld %s, %s ; (optimization, %d ocurrences)",
 					OPTIMIZATION_REGISTER[i],
-					asmByte(this.optimizationValues[i])));
+					asmByte(optimizationValue),
+					optimizationOcurrences));
 		}
 		return lines;
 	}
