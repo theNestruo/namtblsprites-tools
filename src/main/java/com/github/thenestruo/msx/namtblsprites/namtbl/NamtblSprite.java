@@ -23,16 +23,18 @@ import com.github.thenestruo.msx.namtblsprites.util.CharUtils;
  */
 public class NamtblSprite {
 
-	private static final char[] OPTIMIZATION_REGISTER = new char[]{ 'a', 'd', 'e' };
+	private static final char[] OPTIMIZATION_REGISTERS = new char[]{ 'a', 'd', 'e' };
+
+	private static final Coord ONE_TO_RIGHT = new Coord(1, 0);
+	private static final Coord ONE_TO_LEFT = new Coord(-1, 0);
 
 	private final String spriteId;
 	private final NamtblSpriteAlignment alignment;
-	private final NamtblSpriteOptimization optimization;
 	private final Size actualSize;
 	private final List<Char> relativeChars;
 
 	private final short[] optimizableValues;
-	private String previousOffset;
+	private Coord previousOffset;
 
 	/**
 	 * Constructor
@@ -40,16 +42,14 @@ public class NamtblSprite {
 	 * @param pChars the chars that compose the NAMTBL sprite
 	 * @param frameSize the width and height of the sprites
 	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
-	 * @param pOptimization 
 	 */
 	public NamtblSprite(final String spriteId,
 			final List<Char> pChars, final Size frameSize,
-			final NamtblSpriteAlignment pAlignment, final NamtblSpriteOptimization pOptimization) {
+			final NamtblSpriteAlignment pAlignment) {
 		super();
 
 		this.spriteId = Validate.notBlank(spriteId);
 		this.alignment = Objects.requireNonNull(pAlignment);
-		this.optimization = Objects.requireNonNull(pOptimization);
 
 		Objects.requireNonNull(pChars);
 		Validate.isTrue(!pChars.isEmpty());
@@ -58,7 +58,7 @@ public class NamtblSprite {
 		this.actualSize = Size.of(pChars);
 
 		{
-			final List<Char> alignedChars = align(pChars, this.alignment, this.optimization);
+			final List<Char> alignedChars = align(pChars, this.alignment);
 
 			final Coord startingPosition = new Coord(
 					this.alignment == NamtblSpriteAlignment.LEFT ? 0
@@ -89,7 +89,7 @@ public class NamtblSprite {
 				lines.addAll(indent(this.asmInstructions1x1()));
 			} else {
 				lines.add(indent("ex de, hl"));
-				lines.addAll(indent(this.asmPrepareOptimizations()));
+				lines.addAll(indent(this.asmPrepareOptimizableValues()));
 				lines.addAll(indent(this.asmInstructions1xN()));
 			}
 			lines.add(indent("ret"));
@@ -99,7 +99,7 @@ public class NamtblSprite {
 			// Source code
 			lines.addAll(this.asmHeader());
 			lines.add(indent("ex de, hl"));
-			lines.addAll(indent(this.asmPrepareOptimizations()));
+			lines.addAll(indent(this.asmPrepareOptimizableValues()));
 			lines.addAll(indent(this.asmInstructions()));
 			lines.add(indent("ret"));
 		}
@@ -165,7 +165,7 @@ public class NamtblSprite {
 		}
 	}
 
-	private List<String> asmPrepareOptimizations() {
+	private List<String> asmPrepareOptimizableValues() {
 
 		List<String> lines = new ArrayList<>();
 		for (int i = 0, n = this.optimizableValues.length; i < n; i++) {
@@ -176,7 +176,7 @@ public class NamtblSprite {
 					.filter(v -> v.shortValue() == optimizationValue)
 					.count();
 			lines.add(String.format("ld %s, %s ; (optimization, %d ocurrences)",
-					OPTIMIZATION_REGISTER[i],
+					OPTIMIZATION_REGISTERS[i],
 					asmByte(optimizationValue),
 					optimizationOcurrences));
 		}
@@ -197,10 +197,11 @@ public class NamtblSprite {
 	}
 
 	private List<String> asmOffsetInstructions(final Char c) {
-
+		
 		final int x = c.getX();
 		final int y = c.getY();
 
+		// Optimized horizontal only
 		if ((y == 0) && (Math.abs(x) <= 3)) {
 			return (x == 0)
 					? Collections.emptyList()
@@ -209,36 +210,42 @@ public class NamtblSprite {
 							x > 0 ? "inc hl ; (+1, 0)" : "dec hl ; (-1, 0)");
 		}
 
-		final String offset =
-				String.format("%1$d %2$+d*NAMTBL_BUFFER_WIDTH ", x, y);
+		// Optimized cases
+		final Coord offset = c.coords();
 
-		if (StringUtils.equals(offset, this.previousOffset)) {
-			return Collections.singletonList(
-				String.format("add hl, bc ; (%+d, %+d)", x, y));
-
-		} else {
-			this.previousOffset = offset;
-			return Arrays.asList(
-					String.format("ld bc, %s ; (%+d, %+d)", offset, x, y),
-					"add hl, bc");
+		if (this.previousOffset != null) {
+			if (offset.equals(this.previousOffset)) {
+				return Collections.singletonList(
+						String.format("add hl, bc ; %s", offset));
+			}
+			if (offset.equals(this.previousOffset.add(ONE_TO_RIGHT))) {
+				return Arrays.asList(
+						String.format("add hl, bc ; %s, as %s + %s", offset, this.previousOffset, ONE_TO_RIGHT),
+						"inc hl");
+			}
+			if (offset.equals(this.previousOffset.add(ONE_TO_LEFT))) {
+				return Arrays.asList(
+						String.format("add hl, bc ; %s, as %s + %s", offset, this.previousOffset, ONE_TO_LEFT),
+						"dec hl");
+			}
 		}
+
+		// Default case
+		this.previousOffset = offset;
+		
+		return Arrays.asList(
+				String.format("ld bc, %d %+d*NAMTBL_BUFFER_WIDTH ; %s", x, y, offset),
+				"add hl, bc");
 	}
 
 	/*
 	 * (utility routines)
 	 */
 	
-	private static List<Char> align(final List<Char> chars,
-			final NamtblSpriteAlignment alignment, final NamtblSpriteOptimization optimization) {
+	private static List<Char> align(final List<Char> chars, final NamtblSpriteAlignment alignment) {
 		
 		final List<Char> alignedChars = new ArrayList<>(chars);
 		alignedChars.sort(alignment.getComparator());
-		
-		if (optimization == NamtblSpriteOptimization.NO) {
-			return alignedChars;
-		}
-		
-		// ...
 		
 		return alignedChars;
 	}
@@ -270,7 +277,7 @@ public class NamtblSprite {
 		final short value = c.getValue();
 		final int optimizationIndex = ArrayUtils.indexOf(this.optimizableValues, value);
 		return optimizationIndex >= 0
-				? Character.toString(OPTIMIZATION_REGISTER[optimizationIndex])
+				? Character.toString(OPTIMIZATION_REGISTERS[optimizationIndex])
 				: asmByte(c.getValue());
 	}
 

@@ -24,8 +24,7 @@ public class NamtblSpritesExtractor {
 	public static List<NamtblSprite> extract(
 			final RawData data, final short blankValue, final short addend,
 			final String spriteName, final Size spriteSize,
-			final NamtblSpriteAlignment alignment,
-			final NamtblSpriteOptimization optimization) {
+			final NamtblSpriteAlignment alignment) {
 
 		final List<NamtblSprite> sprites = new ArrayList<>();
 		int i = 0;
@@ -39,7 +38,7 @@ public class NamtblSpritesExtractor {
 
 			// Saves the sprite
 			if (!spriteChars.isEmpty()) {
-				sprites.add(new NamtblSprite(spriteId, spriteChars, spriteSize, alignment, optimization));
+				sprites.add(new NamtblSprite(spriteId, spriteChars, spriteSize, alignment));
 			}
 		}
 		return sprites;

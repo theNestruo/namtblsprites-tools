@@ -16,7 +16,8 @@ class TmxReaderTest {
 		final RawData rawData = new TmxReader(ClassPathResource.from("example.tmx")).read();
 		Assertions.assertNotNull(rawData);
 		Assertions.assertNotNull(rawData.getData());
-		Assertions.assertEquals(3, rawData.getWidth());
-		Assertions.assertEquals(15, rawData.getHeight());
+		Assertions.assertNotNull(rawData.getSize());
+		Assertions.assertEquals(3, rawData.getSize().getWidth());
+		Assertions.assertEquals(15, rawData.getSize().getHeight());
 	}
 }

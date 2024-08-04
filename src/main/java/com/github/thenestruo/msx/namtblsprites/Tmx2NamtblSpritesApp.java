@@ -28,7 +28,6 @@ import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.Size;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteOptimization;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.FileSystemResource;
@@ -47,7 +46,6 @@ public class Tmx2NamtblSpritesApp {
 	private static final String LEFT = "left";
 	private static final String RIGHT = "right";
 	private static final String ALIGN = "align";
-	private static final String ZIGZAG = "zigzag";
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
@@ -176,11 +174,7 @@ public class Tmx2NamtblSpritesApp {
 				: command.hasOption(ALIGN) ? NamtblSpriteAlignment.ALIGNED
 				: NamtblSpriteAlignment.DEFAULT;
 		
-		final NamtblSpriteOptimization optimization =
-				command.hasOption(ZIGZAG) ? NamtblSpriteOptimization.ZIGZAG
-				: NamtblSpriteOptimization.NO;
-
-		return NamtblSpritesExtractor.extract(rawData, blankValue, addend, spriteName, spriteSize, alignment, optimization);
+		return NamtblSpritesExtractor.extract(rawData, blankValue, addend, spriteName, spriteSize, alignment);
 	}
 
 	private static void writeAsmFile(

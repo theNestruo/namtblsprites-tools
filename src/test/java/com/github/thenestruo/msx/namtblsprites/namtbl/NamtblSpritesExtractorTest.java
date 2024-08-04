@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
-import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteImpl;
-import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteFactoryImpl;
+import com.github.thenestruo.msx.namtblsprites.model.Size;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.ClassPathResource;
 
@@ -17,39 +16,33 @@ public class NamtblSpritesExtractorTest {
 	@Test
 	public void testExample() throws IOException {
 
-		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.DEFAULT)).extractFrom(3, 3));
+		this.asserts(this.extractFromExample(NamtblSpriteAlignment.DEFAULT));
 	}
 
 	@Test
 	public void testExampleLeft() throws IOException {
 
-		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.LEFT)).extractFrom(3, 3));
+		this.asserts(this.extractFromExample(NamtblSpriteAlignment.LEFT));
 	}
 
 	@Test
 	public void testExampleAligned() throws IOException {
 
-		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.ALIGNED)).extractFrom(3, 3));
+		this.asserts(this.extractFromExample(NamtblSpriteAlignment.ALIGNED));
 	}
 
 	@Test
 	public void testExampleRight() throws IOException {
 
-		this.asserts(this.extractor(this.factory(NamtblSpriteAlignment.RIGHT)).extractFrom(3, 3));
+		this.asserts(this.extractFromExample(NamtblSpriteAlignment.RIGHT));
 	}
 
-	private NamtblSpriteFactory<NamtblSpriteImpl> factory(
-			final NamtblSpriteAlignment alignment) {
-
-		return new NamtblSpriteFactoryImpl(alignment);
-	}
-
-	private <S extends NamtblSprite> NamtblSpritesExtractor<S> extractor(
-			final NamtblSpriteFactory<S> factory) throws IOException {
+	private List<NamtblSprite> extractFromExample(
+			final NamtblSpriteAlignment alignment) throws IOException {
 
 		final RawData rawData = new TmxReader(ClassPathResource.from("example.tmx")).read();
-		return new NamtblSpritesExtractor<>(
-				factory, rawData, (short) 64, (short) 0, "EXAMPLE");
+		return NamtblSpritesExtractor.extract(
+				rawData, (short) 64, (short) 0, "EXAMPLE", new Size(3, 3), alignment);
 	}
 
 	private <S extends NamtblSprite> void asserts(final List<S> sprites) {

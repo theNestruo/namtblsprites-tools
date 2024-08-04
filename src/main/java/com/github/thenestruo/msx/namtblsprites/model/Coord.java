@@ -3,6 +3,9 @@ package com.github.thenestruo.msx.namtblsprites.model;
 import java.util.Comparator;
 import java.util.Objects;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
  * A bidimensional coordinate
  */
@@ -27,11 +30,42 @@ public class Coord {
 		this.x = x;
 		this.y = y;
 	}
+	
+	@Override
+	public int hashCode() {
+		
+		return new HashCodeBuilder().append(this.x).append(this.y).toHashCode();
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != this.getClass()) {
+			return false;
+		}
+		final Coord that = (Coord) obj;
+
+		return new EqualsBuilder()
+				.append(this.x, that.x)
+				.append(this.y, that.y)
+				.isEquals();
+	}
 
 	@Override
 	public String toString() {
 
-		return String.format("(%d,%d)", this.x, this.y);
+		return String.format("(%+d, %+d)", this.x, this.y);
+	}
+	
+	public Coord coords() {
+		
+		return new Coord(this.x, this.y);
 	}
 	
 	public Coord negate() {
