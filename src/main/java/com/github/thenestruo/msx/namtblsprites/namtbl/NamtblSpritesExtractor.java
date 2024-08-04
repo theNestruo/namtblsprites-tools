@@ -2,67 +2,50 @@ package com.github.thenestruo.msx.namtblsprites.namtbl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import com.github.thenestruo.msx.namtblsprites.model.Char;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
-import com.github.thenestruo.msx.namtblsprites.model.RawSprite;
+import com.github.thenestruo.msx.namtblsprites.model.Size;
 
 /**
  * An extractor of {@link NamtblSprite NAMTBL sprites}
  * from a bidimensional chunk of raw data
  */
-public class NamtblSpritesExtractor<S extends NamtblSprite> {
-
-	private final NamtblSpriteFactory<S> factory;
-
-	private final RawData data;
-	private final short blankValue;
-	private final short addend;
-	private final String spriteName;
-
-	/**
-	 * Constructor
-	 * @param factory the NamtblSprite factory
-	 * @param data the bidimensional chunk of raw data
-	 * @param blankValue the value that represents the absence of character
-	 * @param spriteName the name of the sprite
-	 */
-	public NamtblSpritesExtractor(
-			final NamtblSpriteFactory<S> factory, final RawData data,
-			final short blankValue, final short addend, final String spriteName) {
-		super();
-
-		this.factory = Objects.requireNonNull(factory);
-		this.data = Objects.requireNonNull(data);
-		this.blankValue = blankValue;
-		this.addend = addend;
-		this.spriteName = Objects.requireNonNull(spriteName);
-	}
+public class NamtblSpritesExtractor {
 
 	/**
 	 * Builds the {@link NamtblSprite NAMTBL sprites}
-	 * @param width the width of the sprites
-	 * @param height the width of the sprites
+	 * @param data the bidimensional chunk of raw data
+	 * @param blankValue the value that represents the absence of character
+	 * @param spriteName the name of the sprite
+	 * @param spriteSize the width and height of the sprites
 	 * @return the NAMTBL sprites in top to down, then left to right, order
 	 */
-	public List<S> extractFrom(final int width, final int height) {
+	public static List<NamtblSprite> extract(
+			final RawData data, final short blankValue, final short addend,
+			final String spriteName, final Size spriteSize,
+			final NamtblSpriteAlignment alignment,
+			final NamtblSpriteOptimization optimization) {
 
-		final List<S> sprites = new ArrayList<>();
+		final List<NamtblSprite> sprites = new ArrayList<>();
 		int i = 0;
 
 		// Slices the chunk into raw sprites
-		for (final RawData slice : this.data.slice(width, height)) {
-			final String spriteId = String.format("%s_%d", this.spriteName, i++);
+		for (final RawData slice : data.slice(spriteSize)) {
+			final String spriteId = String.format("%s_%d", spriteName, i++);
 
 			// Extracts the chars of the sprite
-			final List<Char> chars = new ArrayList<>(RawSprite.of(slice, this.blankValue, this.addend).getChars());
+			final List<Char> spriteChars = slice.asChars(blankValue, addend);
 
 			// Saves the sprite
-			if (!chars.isEmpty()) {
-				sprites.add(this.factory.instance(spriteId, chars, width, height));
+			if (!spriteChars.isEmpty()) {
+				sprites.add(new NamtblSprite(spriteId, spriteChars, spriteSize, alignment, optimization));
 			}
 		}
 		return sprites;
+	}
+	
+	private NamtblSpritesExtractor() {
+		super();
 	}
 }

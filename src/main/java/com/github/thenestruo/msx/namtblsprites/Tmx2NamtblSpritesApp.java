@@ -25,11 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
+import com.github.thenestruo.msx.namtblsprites.model.Size;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
-import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteFactory;
+import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteOptimization;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
-import com.github.thenestruo.msx.namtblsprites.namtbl.impl.NamtblSpriteFactoryImpl;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.FileSystemResource;
 
@@ -47,6 +47,7 @@ public class Tmx2NamtblSpritesApp {
 	private static final String LEFT = "left";
 	private static final String RIGHT = "right";
 	private static final String ALIGN = "align";
+	private static final String ZIGZAG = "zigzag";
 
 	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
@@ -75,7 +76,7 @@ public class Tmx2NamtblSpritesApp {
 		if (rawData == null) {
 			return;
 		}
-		logger.debug("Tiled TMX file read: {}x{}", rawData.getWidth(), rawData.getHeight());
+		logger.debug("Tiled TMX file read: {}", rawData.getSize());
 
 		// Builds the NAMTBL sprites
 		final List<? extends NamtblSprite> namtblSprites = toNamtblSprites(inputFilePath, rawData, command);
@@ -163,24 +164,23 @@ public class Tmx2NamtblSpritesApp {
 		final short addend = (short) Integer.parseUnsignedInt(command.getOptionValue(ADD, "0"));
 		final String spriteName = command.getOptionValue(NAME, StringUtils.upperCase(FilenameUtils.getBaseName(path)));
 
+		final int spriteWidth = Integer.parseUnsignedInt(
+				command.getOptionValue(WIDTH, Integer.toString(rawData.getSize().getWidth())));
+		final int spriteHeight = Integer.parseUnsignedInt(
+				command.getOptionValue(HEIGHT, Integer.toString(rawData.getSize().getHeight())));
+		final Size spriteSize = new Size(spriteWidth, spriteHeight);
+		
 		final NamtblSpriteAlignment alignment =
 				command.hasOption(LEFT) ? NamtblSpriteAlignment.LEFT
 				: command.hasOption(RIGHT) ? NamtblSpriteAlignment.RIGHT
 				: command.hasOption(ALIGN) ? NamtblSpriteAlignment.ALIGNED
 				: NamtblSpriteAlignment.DEFAULT;
+		
+		final NamtblSpriteOptimization optimization =
+				command.hasOption(ZIGZAG) ? NamtblSpriteOptimization.ZIGZAG
+				: NamtblSpriteOptimization.NO;
 
-		final NamtblSpriteFactory<?> factory =
-				new NamtblSpriteFactoryImpl(alignment);
-
-		final NamtblSpritesExtractor<?> extractor =
-				new NamtblSpritesExtractor<>(factory, rawData, blankValue, addend, spriteName);
-
-		final int spriteWidth = Integer.parseUnsignedInt(
-				command.getOptionValue(WIDTH, Integer.toString(rawData.getWidth())));
-		final int spriteHeight = Integer.parseUnsignedInt(
-				command.getOptionValue(HEIGHT, Integer.toString(rawData.getHeight())));
-
-		return extractor.extractFrom(spriteWidth, spriteHeight);
+		return NamtblSpritesExtractor.extract(rawData, blankValue, addend, spriteName, spriteSize, alignment, optimization);
 	}
 
 	private static void writeAsmFile(
