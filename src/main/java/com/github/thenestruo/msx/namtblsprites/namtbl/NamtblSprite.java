@@ -265,8 +265,9 @@ public class NamtblSprite {
 
 	private List<String> asmOffsetInstructions(final Char c) {
 
-		final int x = c.getX();
-		final int y = c.getY();
+		final Coord offset = c.coords();
+		final int x = offset.getX();
+		final int y = offset.getY();
 
 		// Horizontal only
 		if (y == 0) {
@@ -284,55 +285,51 @@ public class NamtblSprite {
 							? "inc\thl\t; (+1, 0)"
 							: "dec\thl\t; (-1, 0)");
 			}
+		}
 
-			// Other horizontal cases (unoptimized)
-			final Coord offset = c.coords();
+		// General cases (horizontal and vertical)
+
+		try {
+
+			// Attempt optimization
+			if (this.previousOffset != null) {
+
+				// Best case scenario (same offset)
+				if (offset.equals(this.previousOffset)) {
+					return Collections.singletonList(
+						String.format("add\thl, bc\t; %s", offset));
+				}
+
+				// "inc"/"dec" optimized cases
+				if (offset.equals(this.previousOffset.add(ONE_TO_RIGHT))) {
+					return Arrays.asList(
+							String.format("inc\tc\t; %s -> %s", this.previousOffset, offset),
+							String.format("add\thl, bc\t ; %s", offset));
+				}
+				if (offset.equals(this.previousOffset.add(ONE_TO_LEFT))) {
+					return Arrays.asList(
+							String.format("dec\tc\t; %s -> %s", this.previousOffset, offset),
+							String.format("add\thl, bc\t; %s", offset));
+				}
+
+				// "ld c,n" optimized cases
+				if (Integer.signum(x) == Integer.signum(this.previousOffset.getX())) {
+					return Arrays.asList(
+							String.format(
+									"ld\tc, $00ff AND (%+d %+d*NAMTBL_BUFFER_WIDTH)\t; %s -> %s",
+									x, y, this.previousOffset, offset),
+							String.format("add\thl, bc\t; %s", offset));
+				}
+			}
+
+			// Non-optimizable case (or first offset)
 			return Arrays.asList(
-					String.format("ld\tbc, %d\t; %s", x, offset),
+					String.format("ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s", x, y, offset),
 					String.format("add\thl, bc\t; %s", offset));
-		}
 
-		// First vertical displacement
-		if (this.previousOffset == null) {
-			this.previousOffset = c.coords();
-			return Arrays.asList(
-					String.format("ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s", x, y, this.previousOffset),
-					String.format("add\thl, bc\t; %s", this.previousOffset));
+		} finally {
+			this.previousOffset = offset;
 		}
-
-		// General cases
-		final Coord offset = c.coords();
-
-		// Edge case
-		if (offset.equals(this.previousOffset)) {
-			return Collections.singletonList(
-				String.format("add\thl, bc\t; %s", offset));
-		}
-
-		// Optimized cases
-		Coord candidateOffset = this.previousOffset.add(ONE_TO_RIGHT);
-		if (offset.equals(candidateOffset)) {
-			final List<String> offsetInstructions = Arrays.asList(
-					String.format("inc\tc\t; %s -> %s", this.previousOffset, candidateOffset),
-					String.format("add\thl, bc\t ; %s", offset));
-			this.previousOffset = candidateOffset;
-			return offsetInstructions;
-		}
-			
-		candidateOffset = this.previousOffset.add(ONE_TO_LEFT);
-		if (offset.equals(candidateOffset)) {
-			final List<String> offsetInstructions = Arrays.asList(
-					String.format("dec\tc\t; %s -> %s", this.previousOffset, candidateOffset),
-					String.format("add\thl, bc\t; %s", offset));
-			this.previousOffset = candidateOffset;
-			return offsetInstructions;
-		}
-
-		this.previousOffset = offset;
-		return Arrays.asList(
-				String.format("ld\tc, $00ff AND (%+d %+d*NAMTBL_BUFFER_WIDTH)\t; %s -> %s",
-						x, y, this.previousOffset, offset),
-				String.format("add\thl, bc\t; %s", offset));
 	}
 
 	/*
