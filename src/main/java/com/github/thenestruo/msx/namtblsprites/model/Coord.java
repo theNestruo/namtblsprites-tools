@@ -34,7 +34,10 @@ public class Coord {
 	@Override
 	public int hashCode() {
 		
-		return new HashCodeBuilder().append(this.x).append(this.y).toHashCode();
+		return new HashCodeBuilder()
+				.append(this.x)
+				.append(this.y)
+				.toHashCode();
 	}
 	
 	@Override

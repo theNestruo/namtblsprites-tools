@@ -14,10 +14,10 @@ public class Size {
 			return EMPTY;
 		}
 		
-		final int minX = coords.stream().map(Coord::getX).reduce(Integer::min).get();
-		final int minY = coords.stream().map(Coord::getY).reduce(Integer::min).get();
-		final int maxX = coords.stream().map(Coord::getX).reduce(Integer::max).get();
-		final int maxY = coords.stream().map(Coord::getY).reduce(Integer::max).get();
+		final int minX = coords.stream().map(Coord::getX).reduce(Integer::min).orElseThrow();
+		final int minY = coords.stream().map(Coord::getY).reduce(Integer::min).orElseThrow();
+		final int maxX = coords.stream().map(Coord::getX).reduce(Integer::max).orElseThrow();
+		final int maxY = coords.stream().map(Coord::getY).reduce(Integer::max).orElseThrow();
 		
 		return new Size(
 				maxX - minX + 1,
