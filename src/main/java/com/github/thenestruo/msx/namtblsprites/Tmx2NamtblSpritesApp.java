@@ -133,9 +133,12 @@ public class Tmx2NamtblSpritesApp {
 		}
 
 		final Logger rootLogger = LoggerFactory.getILoggerFactory().getLogger(Logger.ROOT_LOGGER_NAME);
-		ch.qos.logback.classic.Logger.class.cast(rootLogger).setLevel(Level.DEBUG);
+		if (rootLogger instanceof ch.qos.logback.classic.Logger logbackLogger) {
+			logbackLogger.setLevel(Level.DEBUG);
+			return true;
+		}
 
-		return true;
+		return false;
 	}
 
 	private static Pair<String, RawData> readTmx(final CommandLine command) throws IOException {

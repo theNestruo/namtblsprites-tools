@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.thenestruo</groupId>
 		<artifactId>thenestruo-cli-parent</artifactId>
-		<version>2.2</version>
+		<version>2.3</version>
 		<relativePath />
 	</parent>
 
@@ -76,6 +76,16 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>shade</id>
+						<configuration>
+							<!-- Fixes: "java.util.ServiceConfigurationError: javax.xml.stream.XMLInputFactory:
+							 Provider com.ctc.wstx.stax.WstxInputFactory not found" -->
+							<minimizeJar>false</minimizeJar>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 		</plugins>
