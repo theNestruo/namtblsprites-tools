@@ -30,6 +30,7 @@ public class NamtblSprite {
 	private final String spriteId;
 	private final NamtblSpriteAlignment alignment;
 	private final Size actualSize;
+	private final boolean compensateEvenWidthCentering;
 	private final List<Char> relativeChars;
 
 	private char[] optimizationRegisters;
@@ -60,16 +61,35 @@ public class NamtblSprite {
 		{
 			final List<Char> alignedChars = align(pChars, this.alignment);
 
-			final Coord startingPosition = new Coord(
-					this.alignment == NamtblSpriteAlignment.LEFT ? 0
-							: this.alignment == NamtblSpriteAlignment.RIGHT ? frameSize.getWidth() -1
-							: Math.floorDiv(this.actualSize.getWidth() - 1, 2),
-					frameSize.getHeight() -1);
+			Coord startingPosition;
+			switch (this.alignment) {
+			case LEFT:
+				startingPosition = new Coord(0, frameSize.getHeight() -1);
+				this.compensateEvenWidthCentering = false;
+				break;
+			
+			case RIGHT:
+				startingPosition = new Coord(frameSize.getWidth() -1, frameSize.getHeight() -1);
+				this.compensateEvenWidthCentering = false;
+				break;
+				
+			case DEFAULT:
+			case ALIGNED:
+			default:
+				startingPosition = new Coord(
+						Math.floorDiv(this.actualSize.getWidth() - 1, 2),
+						frameSize.getHeight() -1);
+				this.compensateEvenWidthCentering = canCompensateEvenWidthCentering(alignedChars, startingPosition); 
+				if (this.compensateEvenWidthCentering) {
+					startingPosition = startingPosition.add(ONE_TO_RIGHT);
+				}
+				break;
+			}
 
 			this.relativeChars = CharUtils.asRelativeChars(alignedChars, startingPosition);
 		}
 	}
-
+	
 	/**
 	 * @return the asm lines to render this particular sprite
 	 */
@@ -80,7 +100,7 @@ public class NamtblSprite {
 		if (this.actualSize.getWidth() == 1) {
 
 			// Source code for special cases: width == 1
-			lines.addAll(this.asmHeader());
+			lines.addAll(this.asmHeader(false));
 			if (this.actualSize.getHeight() == 1) {
 				lines.addAll(indent(this.asmInstructions1x1()));
 			} else {
@@ -93,7 +113,7 @@ public class NamtblSprite {
 		} else {
 
 			// Source code
-			lines.addAll(this.asmHeader());
+			lines.addAll(this.asmHeader(true));
 			lines.add(indent("ex\tde, hl"));
 			lines.addAll(indent(this.asmPrepareOptimizableValues()));
 			lines.addAll(indent(this.asmInstructions()));
@@ -130,7 +150,7 @@ public class NamtblSprite {
 		return lines;
 	}
 
-	private List<String> asmHeader() {
+	private List<String> asmHeader(boolean allowImplicitCentering) {
 
 		switch (this.alignment) {
 			case DEFAULT:
@@ -139,22 +159,30 @@ public class NamtblSprite {
 				lines.add(
 					String.format(".%s: ; %s", this.spriteId, this.actualSize));
 				if (this.actualSize.getWidth() % 2 == 0) {
-					lines.add(indent("dec\tde\t; (even width centering)"));
+					lines.add(indent(this.compensateEvenWidthCentering
+							? "; (implicit even width centering => (+1, 0))"
+							: "dec\tde\t; (even width centering)"));
 				}
 				return lines;
 			}
 
 			case ALIGNED:
 			{
-				final List<String> lines = new ArrayList<>();
-				lines.add(
-					String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
-				if (this.actualSize.getWidth() % 2 == 0) {
-					lines.add(indent("dec\tde\t; (-1, 0)"));
+				if (this.compensateEvenWidthCentering) {
+					return Arrays.asList(
+							String.format(".%s_R: ; %s", this.spriteId, this.actualSize),
+							indent("inc\tde\t; (+1, 0)"),
+							String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
+					
+				} else {
+					final List<String> lines = new ArrayList<>();
+					lines.add(String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
+					if (this.actualSize.getWidth() % 2 == 0) {
+						lines.add(indent("dec\tde\t; (-1, 0)"));
+					}
+					lines.add(String.format(".%s_R: ; %s", this.spriteId, this.actualSize));
+					return lines;
 				}
-				lines.add(
-					String.format(".%s_R: ; %s", this.spriteId, this.actualSize));
-				return lines;
 			}
 
 			case LEFT:
@@ -344,6 +372,17 @@ public class NamtblSprite {
 		return alignedChars;
 	}
 
+	private static boolean canCompensateEvenWidthCentering(final List<Char> alignedChars, final Coord startingPosition) {
+		
+		if (Size.of(alignedChars).getWidth() % 2 != 0) {
+			return false;
+		}
+		
+		final Coord compensatedStartingPosition = startingPosition.add(ONE_TO_RIGHT);
+		final Coord firstAlignedCoord = alignedChars.get(0).coords();
+		return firstAlignedCoord.equals(compensatedStartingPosition);
+	}
+
 	private static List<String> indent(final List<String> list) {
 		return list.stream().map(s -> indent(s)).collect(Collectors.toList());
 	}
@@ -355,6 +394,4 @@ public class NamtblSprite {
 	private static String asmByte(final short s) {
 		return "$" + StringUtils.leftPad(StringUtils.right(Integer.toHexString(s), 2), 2, '0');
 	}
-
-
 }
