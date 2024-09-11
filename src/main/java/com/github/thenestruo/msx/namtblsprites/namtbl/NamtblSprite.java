@@ -123,33 +123,6 @@ public class NamtblSprite {
 		return lines;
 	}
 
-	/**
-	 * @return the asm lines to render this 1x1 sprite
-	 */
-	private List<String> asmInstructions1x1() {
-
-		return Arrays.asList(
-				String.format("ld\ta, %s", asmByte(this.relativeChars.iterator().next())),
-				"ld\t(de), a");
-	}
-
-	/**
-	 * @return the asm lines to render this 1xN sprite
-	 */
-	private List<String> asmInstructions1xN() {
-
-		System.err.println(this.relativeChars);
-
-		final List<String> lines = new ArrayList<>();
-
-		lines.add("ld\tbc, -NAMTBL_BUFFER_WIDTH");
-		for (final Char c : this.relativeChars) {
-			lines.addAll(Collections.nCopies(-c.getY(), "add\thl, bc\t; (0, -1)"));
-			lines.add(String.format("ld\t(hl), %s", asmByte(c)));
-		}
-		return lines;
-	}
-
 	private List<String> asmHeader(boolean allowImplicitCentering) {
 
 		switch (this.alignment) {
@@ -193,8 +166,129 @@ public class NamtblSprite {
 		}
 	}
 
-	private List<String> asmPrepareOptimizableValues() {
+	/**
+	 * @return the asm lines to render this 1x1 sprite
+	 */
+	private List<String> asmInstructions1x1() {
 
+		return Arrays.asList(
+				String.format("ld\ta, %s", asmByteOptimizable(this.relativeChars.iterator().next())),
+				"ld\t(de), a");
+	}
+
+	/**
+	 * @return the asm lines to render this 1xN sprite
+	 */
+	private List<String> asmInstructions1xN() {
+
+		System.err.println(this.relativeChars);
+
+		final List<String> lines = new ArrayList<>();
+
+		lines.add("ld\tbc, -NAMTBL_BUFFER_WIDTH");
+		for (final Char c : this.relativeChars) {
+			lines.addAll(Collections.nCopies(-c.getY(), "add\thl, bc\t; (0, -1)"));
+			lines.add(String.format("ld\t(hl), %s", asmByteOptimizable(c)));
+		}
+		return lines;
+	}
+
+
+	/**
+	 * @return the asm lines of code to render this particular sprite
+	 */
+	private List<String> asmInstructions() {
+	
+		final List<String> lines = new ArrayList<>();
+		for (final ListIterator<Char> lit = this.relativeChars.listIterator(); lit.hasNext(); ) {
+			final Char c = lit.next();
+			lines.addAll(this.asmOffsetInstructions(c));
+			lines.add(String.format("ld\t(hl), %s", this.asmByteOptimizable(c)));
+			lines.addAll(this.asmUpdateOptimizableValues(lit.nextIndex()));
+		}
+		return lines;
+	}
+
+	private List<String> asmOffsetInstructions(final Char c) {
+	
+		final Coord offset = c.coords();
+		final int x = offset.getX();
+		final int y = offset.getY();
+	
+		// Horizontal only
+		if (y == 0) {
+	
+			// (should never happen)
+			if (x == 0) {
+				return Collections.emptyList();
+			}
+	
+			// Optimized cases
+			if (Math.abs(x) <= 3) {
+				return Collections.nCopies(
+						Math.abs(x),
+						x > 0
+							? "inc\thl\t; (+1, 0)"
+							: "dec\thl\t; (-1, 0)");
+			}
+		}
+	
+		// General cases (horizontal and vertical)
+	
+		try {
+	
+			// Attempt optimization
+			if (this.previousOffset != null) {
+	
+				// Best case scenario (same offset)
+				if (offset.equals(this.previousOffset)) {
+					return Collections.singletonList(
+						String.format("add\thl, bc\t; %s", offset));
+				}
+	
+				// "inc"/"dec" optimized cases
+				if (offset.equals(this.previousOffset.add(ONE_TO_RIGHT))) {
+					return Arrays.asList(
+							String.format("inc\tc\t; %s -> %s", this.previousOffset, offset),
+							String.format("add\thl, bc\t ; %s", offset));
+				}
+				if (offset.equals(this.previousOffset.add(ONE_TO_LEFT))) {
+					return Arrays.asList(
+							String.format("dec\tc\t; %s -> %s", this.previousOffset, offset),
+							String.format("add\thl, bc\t; %s", offset));
+				}
+	
+				// "ld c,n" optimized cases
+				if (Integer.signum(x) == Integer.signum(this.previousOffset.getX())) {
+					return Arrays.asList(
+							String.format(
+									"ld\tc, $00ff AND (%+d %+d*NAMTBL_BUFFER_WIDTH)\t; %s -> %s",
+									x, y, this.previousOffset, offset),
+							String.format("add\thl, bc\t; %s", offset));
+				}
+			}
+	
+			// Non-optimizable case (or first offset)
+			return Arrays.asList(
+					String.format("ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s", x, y, offset),
+					String.format("add\thl, bc\t; %s", offset));
+	
+		} finally {
+			this.previousOffset = offset;
+		}
+	}
+
+	private String asmByteOptimizable(final Char c) {
+	
+		final short value = c.getValue();
+		final int optimizationIndex = ArrayUtils.indexOf(this.optimizableValues, value);
+		return optimizationIndex >= 0
+				? Character.toString(this.optimizationRegisters[optimizationIndex])
+				: asmByte(c.getValue());
+	}
+
+	private List<String> asmPrepareOptimizableValues() {
+	
 		// Optimizable values
 		final short[] lOptimizableValues = ArrayUtils.toPrimitive(
 				this.findMostCommonValues(3, 3).toArray(new Short[0]));
@@ -245,10 +339,59 @@ public class NamtblSprite {
 		}
 	}
 
+	private List<String> asmUpdateOptimizableValues(final long skip) {
+		
+		final List<String> lines = new ArrayList<>();
+		for (int i = 0, n = this.optimizableValues.length; i < n; i++) {
+			
+			final short value = this.optimizableValues[i];
+			final long ocurrences = this.ocurrencesOf(skip, value);
+			
+			final short valueMinus1 = (short) (value - 1);
+			final long ocurrencesOfMinus1 = ArrayUtils.contains(this.optimizableValues, valueMinus1)
+					? -1L
+					: this.ocurrencesOf(skip, valueMinus1);
+
+			final short valuePlus1 = (short) (value + 1);
+			final long ocurrencesOfPlus1 = ArrayUtils.contains(this.optimizableValues, valuePlus1)
+					? -1L
+					: this.ocurrencesOf(skip, valuePlus1);
+			
+			if ((ocurrencesOfMinus1 - ocurrences >= 2) && (ocurrencesOfMinus1 >= ocurrencesOfPlus1)) {
+				
+				// Update optimization to value - 1
+				lines.add(String.format("dec\t%s\t; (optimization for %d > %d ocurrences)",
+						this.optimizationRegisters[i],
+						ocurrencesOfMinus1,
+						ocurrences));
+				this.optimizableValues[i] = valueMinus1;
+				continue;
+			}
+			
+			if (ocurrencesOfPlus1 - ocurrences >= 2) {
+				
+				// Update optimization to value + 1
+				lines.add(String.format("inc\t%s\t; (optimization for %d > %d ocurrences)",
+						this.optimizationRegisters[i],
+						ocurrencesOfPlus1,
+						ocurrences));
+				this.optimizableValues[i] = valuePlus1;
+				continue;
+			}
+		}
+		return lines;
+	}
+
 	private List<Short> findMostCommonValues(final int atLeast, final int limit) {
+		
+		return this.findMostCommonValues(0L, atLeast, limit);
+	}
+
+	private List<Short> findMostCommonValues(final long skip, final int atLeast, final int limit) {
 
 		return this.relativeChars
 				.stream()
+				.skip((long) skip)
 				.collect(Collectors.groupingBy(Char::getValue, Collectors.counting()))
 				.entrySet()
 				.stream()
@@ -261,103 +404,17 @@ public class NamtblSprite {
 	
 	private long ocurrencesOf(final short value) {
 		
+		return this.ocurrencesOf(0L, value);
+	}
+	
+	private long ocurrencesOf(final long skip, final short value) {
+		
 		return this.relativeChars
 				.stream()
+				.skip(skip)
 				.map(Char::getValue)
 				.filter(v -> v.shortValue() == value)
 				.count();
-	}
-
-	private String asmByte(final Char c) {
-
-		final short value = c.getValue();
-		final int optimizationIndex = ArrayUtils.indexOf(this.optimizableValues, value);
-		return optimizationIndex >= 0
-				? Character.toString(this.optimizationRegisters[optimizationIndex])
-				: asmByte(c.getValue());
-	}
-
-	/**
-	 * @return the asm lines of code to render this particular sprite
-	 */
-	private List<String> asmInstructions() {
-
-		final List<String> lines = new ArrayList<>();
-		for (final ListIterator<Char> lit = this.relativeChars.listIterator(); lit.hasNext(); ) {
-			final Char c = lit.next();
-			lines.addAll(this.asmOffsetInstructions(c));
-			lines.add(String.format("ld\t(hl), %s", this.asmByte(c)));
-		}
-		return lines;
-	}
-
-	private List<String> asmOffsetInstructions(final Char c) {
-
-		final Coord offset = c.coords();
-		final int x = offset.getX();
-		final int y = offset.getY();
-
-		// Horizontal only
-		if (y == 0) {
-
-			// (should never happen)
-			if (x == 0) {
-				return Collections.emptyList();
-			}
-
-			// Optimized cases
-			if (Math.abs(x) <= 3) {
-				return Collections.nCopies(
-						Math.abs(x),
-						x > 0
-							? "inc\thl\t; (+1, 0)"
-							: "dec\thl\t; (-1, 0)");
-			}
-		}
-
-		// General cases (horizontal and vertical)
-
-		try {
-
-			// Attempt optimization
-			if (this.previousOffset != null) {
-
-				// Best case scenario (same offset)
-				if (offset.equals(this.previousOffset)) {
-					return Collections.singletonList(
-						String.format("add\thl, bc\t; %s", offset));
-				}
-
-				// "inc"/"dec" optimized cases
-				if (offset.equals(this.previousOffset.add(ONE_TO_RIGHT))) {
-					return Arrays.asList(
-							String.format("inc\tc\t; %s -> %s", this.previousOffset, offset),
-							String.format("add\thl, bc\t ; %s", offset));
-				}
-				if (offset.equals(this.previousOffset.add(ONE_TO_LEFT))) {
-					return Arrays.asList(
-							String.format("dec\tc\t; %s -> %s", this.previousOffset, offset),
-							String.format("add\thl, bc\t; %s", offset));
-				}
-
-				// "ld c,n" optimized cases
-				if (Integer.signum(x) == Integer.signum(this.previousOffset.getX())) {
-					return Arrays.asList(
-							String.format(
-									"ld\tc, $00ff AND (%+d %+d*NAMTBL_BUFFER_WIDTH)\t; %s -> %s",
-									x, y, this.previousOffset, offset),
-							String.format("add\thl, bc\t; %s", offset));
-				}
-			}
-
-			// Non-optimizable case (or first offset)
-			return Arrays.asList(
-					String.format("ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s", x, y, offset),
-					String.format("add\thl, bc\t; %s", offset));
-
-		} finally {
-			this.previousOffset = offset;
-		}
 	}
 
 	/*
