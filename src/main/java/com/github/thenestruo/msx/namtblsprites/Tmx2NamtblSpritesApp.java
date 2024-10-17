@@ -43,6 +43,7 @@ public class Tmx2NamtblSpritesApp {
 	private static final String ADD = "add";
 	private static final String BLANK = "blank";
 	private static final String NAME = "name";
+	private static final String RETURN = "return";
 	private static final String LEFT = "left";
 	private static final String RIGHT = "right";
 	private static final String ALIGN = "align";
@@ -97,6 +98,7 @@ public class Tmx2NamtblSpritesApp {
 		options.addOption(ADD, true, "The addend for the values");
 		options.addOption(BLANK, true, "The blank value to be ignored");
 		options.addOption(NAME, true, "An identifying name for the rendering routines");
+		options.addOption(RETURN, true, "Return instruction");
 		options.addOption(LEFT, "Align left, draw to right");
 		options.addOption(RIGHT, "Align right, draw to left");
 		options.addOption(ALIGN, "Align center, draw to right (alt. entry points for even widths)");
@@ -170,14 +172,16 @@ public class Tmx2NamtblSpritesApp {
 		final int spriteHeight = Integer.parseUnsignedInt(
 				command.getOptionValue(HEIGHT, Integer.toString(rawData.getSize().getHeight())));
 		final Size spriteSize = new Size(spriteWidth, spriteHeight);
-		
+
 		final NamtblSpriteAlignment alignment =
 				command.hasOption(LEFT) ? NamtblSpriteAlignment.LEFT
 				: command.hasOption(RIGHT) ? NamtblSpriteAlignment.RIGHT
 				: command.hasOption(ALIGN) ? NamtblSpriteAlignment.ALIGNED
 				: NamtblSpriteAlignment.DEFAULT;
-		
-		return NamtblSpritesExtractor.extract(rawData, blankValue, addend, spriteName, spriteSize, alignment);
+
+		final String returnInstruction = command.getOptionValue(RETURN);
+
+		return NamtblSpritesExtractor.extract(rawData, blankValue, addend, spriteName, spriteSize, alignment, returnInstruction);
 	}
 
 	private static void writeAsmFile(

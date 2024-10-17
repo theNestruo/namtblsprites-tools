@@ -42,7 +42,7 @@ public class NamtblSpritesExtractorTest {
 
 		final RawData rawData = new TmxReader(ClassPathResource.from("example.tmx")).read();
 		return NamtblSpritesExtractor.extract(
-				rawData, (short) 64, (short) 0, "EXAMPLE", new Size(3, 3), alignment);
+				rawData, (short) 64, (short) 0, "EXAMPLE", new Size(3, 3), alignment, null);
 	}
 
 	private <S extends NamtblSprite> void asserts(final List<S> sprites) {

@@ -29,6 +29,7 @@ public class NamtblSprite {
 
 	private final String spriteId;
 	private final NamtblSpriteAlignment alignment;
+	private final String returnInstruction;
 	private final Size actualSize;
 	private final boolean compensateEvenWidthCentering;
 	private final List<Char> relativeChars;
@@ -46,11 +47,13 @@ public class NamtblSprite {
 	 */
 	public NamtblSprite(final String spriteId,
 			final List<Char> pChars, final Size frameSize,
-			final NamtblSpriteAlignment pAlignment) {
+			final NamtblSpriteAlignment pAlignment,
+			final String returnInstruction) {
 		super();
 
 		this.spriteId = Validate.notBlank(spriteId);
 		this.alignment = Objects.requireNonNull(pAlignment);
+		this.returnInstruction = Objects.toString(returnInstruction, "ret");
 
 		Objects.requireNonNull(pChars);
 		Validate.isTrue(!pChars.isEmpty());
@@ -67,19 +70,19 @@ public class NamtblSprite {
 				startingPosition = new Coord(0, frameSize.getHeight() -1);
 				this.compensateEvenWidthCentering = false;
 				break;
-			
+
 			case RIGHT:
 				startingPosition = new Coord(frameSize.getWidth() -1, frameSize.getHeight() -1);
 				this.compensateEvenWidthCentering = false;
 				break;
-				
+
 			case DEFAULT:
 			case ALIGNED:
 			default:
 				startingPosition = new Coord(
 						Math.floorDiv(this.actualSize.getWidth() - 1, 2),
 						frameSize.getHeight() -1);
-				this.compensateEvenWidthCentering = canCompensateEvenWidthCentering(alignedChars, startingPosition); 
+				this.compensateEvenWidthCentering = canCompensateEvenWidthCentering(alignedChars, startingPosition);
 				if (this.compensateEvenWidthCentering) {
 					startingPosition = startingPosition.add(ONE_TO_RIGHT);
 				}
@@ -89,7 +92,7 @@ public class NamtblSprite {
 			this.relativeChars = CharUtils.asRelativeChars(alignedChars, startingPosition);
 		}
 	}
-	
+
 	/**
 	 * @return the asm lines to render this particular sprite
 	 */
@@ -108,7 +111,7 @@ public class NamtblSprite {
 				lines.addAll(indent(this.asmPrepareOptimizableValues()));
 				lines.addAll(indent(this.asmInstructions1xN()));
 			}
-			lines.add(indent("ret"));
+			lines.add(indent(returnInstruction));
 
 		} else {
 
@@ -117,7 +120,7 @@ public class NamtblSprite {
 			lines.add(indent("ex\tde, hl"));
 			lines.addAll(indent(this.asmPrepareOptimizableValues()));
 			lines.addAll(indent(this.asmInstructions()));
-			lines.add(indent("ret"));
+			lines.add(indent(returnInstruction));
 		}
 
 		return lines;
@@ -146,7 +149,7 @@ public class NamtblSprite {
 							String.format(".%s_R: ; %s", this.spriteId, this.actualSize),
 							indent("inc\tde\t; (+1, 0)"),
 							String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
-					
+
 				} else {
 					final List<String> lines = new ArrayList<>();
 					lines.add(String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
@@ -198,7 +201,7 @@ public class NamtblSprite {
 	 * @return the asm lines of code to render this particular sprite
 	 */
 	private List<String> asmInstructions() {
-	
+
 		final List<String> lines = new ArrayList<>();
 		for (final ListIterator<Char> lit = this.relativeChars.listIterator(); lit.hasNext(); ) {
 			final Char c = lit.next();
@@ -210,19 +213,19 @@ public class NamtblSprite {
 	}
 
 	private List<String> asmOffsetInstructions(final Char c) {
-	
+
 		final Coord offset = c.coords();
 		final int x = offset.getX();
 		final int y = offset.getY();
-	
+
 		// Horizontal only
 		if (y == 0) {
-	
+
 			// (should never happen)
 			if (x == 0) {
 				return Collections.emptyList();
 			}
-	
+
 			// Optimized cases
 			if (Math.abs(x) <= 3) {
 				return Collections.nCopies(
@@ -232,20 +235,20 @@ public class NamtblSprite {
 							: "dec\thl\t; (-1, 0)");
 			}
 		}
-	
+
 		// General cases (horizontal and vertical)
-	
+
 		try {
-	
+
 			// Attempt optimization
 			if (this.previousOffset != null) {
-	
+
 				// Best case scenario (same offset)
 				if (offset.equals(this.previousOffset)) {
 					return Collections.singletonList(
 						String.format("add\thl, bc\t; %s", offset));
 				}
-	
+
 				// "inc"/"dec" optimized cases
 				if (offset.equals(this.previousOffset.add(ONE_TO_RIGHT))) {
 					return Arrays.asList(
@@ -257,7 +260,7 @@ public class NamtblSprite {
 							String.format("dec\tc\t; %s -> %s", this.previousOffset, offset),
 							String.format("add\thl, bc\t; %s", offset));
 				}
-	
+
 				// "ld c,n" optimized cases
 				if (Integer.signum(x) == Integer.signum(this.previousOffset.getX())) {
 					return Arrays.asList(
@@ -267,19 +270,19 @@ public class NamtblSprite {
 							String.format("add\thl, bc\t; %s", offset));
 				}
 			}
-	
+
 			// Non-optimizable case (or first offset)
 			return Arrays.asList(
 					String.format("ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s", x, y, offset),
 					String.format("add\thl, bc\t; %s", offset));
-	
+
 		} finally {
 			this.previousOffset = offset;
 		}
 	}
 
 	private String asmByteOptimizable(final Char c) {
-	
+
 		final short value = c.getValue();
 		final int optimizationIndex = ArrayUtils.indexOf(this.optimizableValues, value);
 		return optimizationIndex >= 0
@@ -288,17 +291,17 @@ public class NamtblSprite {
 	}
 
 	private List<String> asmPrepareOptimizableValues() {
-	
+
 		// Optimizable values
 		final short[] lOptimizableValues = ArrayUtils.toPrimitive(
 				this.findMostCommonValues(3, 3).toArray(new Short[0]));
-		
+
 		switch (lOptimizableValues.length) {
 		case 0:
 			this.optimizationRegisters = ArrayUtils.EMPTY_CHAR_ARRAY;
 			this.optimizableValues = ArrayUtils.EMPTY_SHORT_ARRAY;
 			return Collections.emptyList();
-			
+
 		case 1:
 			this.optimizationRegisters = new char[] {'a'};
 			this.optimizableValues = lOptimizableValues;
@@ -307,7 +310,7 @@ public class NamtblSprite {
 					this.optimizationRegisters[0],
 					asmByte(this.optimizableValues[0]),
 					this.ocurrencesOf(this.optimizableValues[0])));
-			
+
 		case 2:
 			this.optimizationRegisters = new char[] {'d', 'e'};
 			this.optimizableValues = lOptimizableValues;
@@ -319,7 +322,7 @@ public class NamtblSprite {
 					asmByte(this.optimizableValues[1]),
 					this.ocurrencesOf(this.optimizableValues[0]),
 					this.ocurrencesOf(this.optimizableValues[1])));
-			
+
 		case 3:
 		default:
 			this.optimizationRegisters = new char[] {'a', 'd', 'e'};
@@ -340,13 +343,13 @@ public class NamtblSprite {
 	}
 
 	private List<String> asmUpdateOptimizableValues(final long skip) {
-		
+
 		final List<String> lines = new ArrayList<>();
 		for (int i = 0, n = this.optimizableValues.length; i < n; i++) {
-			
+
 			final short value = this.optimizableValues[i];
 			final long ocurrences = this.ocurrencesOf(skip, value);
-			
+
 			final short valueMinus1 = (short) (value - 1);
 			final long ocurrencesOfMinus1 = ArrayUtils.contains(this.optimizableValues, valueMinus1)
 					? -1L
@@ -356,9 +359,9 @@ public class NamtblSprite {
 			final long ocurrencesOfPlus1 = ArrayUtils.contains(this.optimizableValues, valuePlus1)
 					? -1L
 					: this.ocurrencesOf(skip, valuePlus1);
-			
+
 			if ((ocurrencesOfMinus1 - ocurrences >= 2) && (ocurrencesOfMinus1 >= ocurrencesOfPlus1)) {
-				
+
 				// Update optimization to value - 1
 				lines.add(String.format("dec\t%s\t; (optimization for %d > %d ocurrences)",
 						this.optimizationRegisters[i],
@@ -367,9 +370,9 @@ public class NamtblSprite {
 				this.optimizableValues[i] = valueMinus1;
 				continue;
 			}
-			
+
 			if (ocurrencesOfPlus1 - ocurrences >= 2) {
-				
+
 				// Update optimization to value + 1
 				lines.add(String.format("inc\t%s\t; (optimization for %d > %d ocurrences)",
 						this.optimizationRegisters[i],
@@ -383,7 +386,7 @@ public class NamtblSprite {
 	}
 
 	private List<Short> findMostCommonValues(final int atLeast, final int limit) {
-		
+
 		return this.findMostCommonValues(0L, atLeast, limit);
 	}
 
@@ -401,14 +404,14 @@ public class NamtblSprite {
 				.map(Entry::getKey)
 				.collect(Collectors.toList());
 	}
-	
+
 	private long ocurrencesOf(final short value) {
-		
+
 		return this.ocurrencesOf(0L, value);
 	}
-	
+
 	private long ocurrencesOf(final long skip, final short value) {
-		
+
 		return this.relativeChars
 				.stream()
 				.skip(skip)
@@ -430,11 +433,11 @@ public class NamtblSprite {
 	}
 
 	private static boolean canCompensateEvenWidthCentering(final List<Char> alignedChars, final Coord startingPosition) {
-		
+
 		if (Size.of(alignedChars).getWidth() % 2 != 0) {
 			return false;
 		}
-		
+
 		final Coord compensatedStartingPosition = startingPosition.add(ONE_TO_RIGHT);
 		final Coord firstAlignedCoord = alignedChars.get(0).coords();
 		return firstAlignedCoord.equals(compensatedStartingPosition);
