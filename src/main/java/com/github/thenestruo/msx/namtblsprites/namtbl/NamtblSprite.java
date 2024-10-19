@@ -133,7 +133,7 @@ public class NamtblSprite {
 			{
 				final List<String> lines = new ArrayList<>();
 				lines.add(
-					String.format(".%s: ; %s", this.spriteId, this.actualSize));
+					String.format("%s: ; %s", this.spriteId, this.actualSize));
 				if (this.actualSize.getWidth() % 2 == 0) {
 					lines.add(indent(this.compensateEvenWidthCentering
 							? "; (implicit even width centering => (+1, 0))"
@@ -146,17 +146,17 @@ public class NamtblSprite {
 			{
 				if (this.compensateEvenWidthCentering) {
 					return Arrays.asList(
-							String.format(".%s_R: ; %s", this.spriteId, this.actualSize),
+							String.format("%s_R: ; %s", this.spriteId, this.actualSize),
 							indent("inc\tde\t; (+1, 0)"),
-							String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
+							String.format("%s_L: ; %s", this.spriteId, this.actualSize));
 
 				} else {
 					final List<String> lines = new ArrayList<>();
-					lines.add(String.format(".%s_L: ; %s", this.spriteId, this.actualSize));
+					lines.add(String.format("%s_L: ; %s", this.spriteId, this.actualSize));
 					if (this.actualSize.getWidth() % 2 == 0) {
 						lines.add(indent("dec\tde\t; (-1, 0)"));
 					}
-					lines.add(String.format(".%s_R: ; %s", this.spriteId, this.actualSize));
+					lines.add(String.format("%s_R: ; %s", this.spriteId, this.actualSize));
 					return lines;
 				}
 			}
@@ -165,7 +165,7 @@ public class NamtblSprite {
 			case RIGHT:
 			default:
 				return Collections.singletonList(
-					String.format(".%s: ; %s", this.spriteId, this.actualSize));
+					String.format("%s: ; %s", this.spriteId, this.actualSize));
 		}
 	}
 
