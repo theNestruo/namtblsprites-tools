@@ -1,13 +1,13 @@
 package com.github.thenestruo.msx.namtblsprites;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -21,8 +21,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tinylog.Logger;
+import org.tinylog.configuration.Configuration;
 
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.Size;
@@ -31,8 +31,6 @@ import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 import com.github.thenestruo.util.FileSystemResource;
-
-import ch.qos.logback.classic.Level;
 
 public class Tmx2NamtblSpritesApp {
 
@@ -47,8 +45,6 @@ public class Tmx2NamtblSpritesApp {
 	private static final String LEFT = "left";
 	private static final String RIGHT = "right";
 	private static final String ALIGN = "align";
-
-	private static final Logger logger = LoggerFactory.getLogger(Tmx2NamtblSpritesApp.class);
 
 	public static void main(final String[] args) throws ParseException, IOException {
 
@@ -75,17 +71,17 @@ public class Tmx2NamtblSpritesApp {
 		if (rawData == null) {
 			return;
 		}
-		logger.debug("Tiled TMX file read: {}", rawData.getSize());
+		Logger.debug("Tiled TMX file read: {}", rawData.getSize());
 
 		// Builds the NAMTBL sprites
 		final List<? extends NamtblSprite> namtblSprites = toNamtblSprites(inputFilePath, rawData, command);
-		logger.debug("{} NAMTBL sprites read", namtblSprites.size());
+		Logger.debug("{} NAMTBL sprites read", namtblSprites.size());
 
 		// Writes the ASM file
 		final String asmFilePath = nextPath(command, inputFilePath + ".asm");
-		logger.debug("{} NAMTBL sprites will be written to ASM file {}", namtblSprites.size(), asmFilePath);
+		Logger.debug("{} NAMTBL sprites will be written to ASM file {}", namtblSprites.size(), asmFilePath);
 		writeAsmFile(asmFilePath, namtblSprites, command);
-		logger.debug("ASM file {} written", asmFilePath);
+		Logger.debug("ASM file {} written", asmFilePath);
 	}
 
 	private static Options options() {
@@ -134,13 +130,8 @@ public class Tmx2NamtblSpritesApp {
 			return false;
 		}
 
-		final Logger rootLogger = LoggerFactory.getILoggerFactory().getLogger(Logger.ROOT_LOGGER_NAME);
-		if (rootLogger instanceof ch.qos.logback.classic.Logger logbackLogger) {
-			logbackLogger.setLevel(Level.DEBUG);
-			return true;
-		}
-
-		return false;
+		Configuration.set("writer.level", "debug");
+		return true;
 	}
 
 	private static Pair<String, RawData> readTmx(final CommandLine command) throws IOException {
@@ -149,13 +140,13 @@ public class Tmx2NamtblSpritesApp {
 		if (path == null) {
 			return Pair.of(null, null);
 		}
-		final File file = new File(path);
-		if (!file.exists()) {
-			logger.warn("Tiled TMX input file {} does not exist", file.getAbsolutePath());
+		final Path file = Path.of(path);
+		if (!Files.exists(file)) {
+			Logger.warn("Tiled TMX input file {} does not exist", file.toAbsolutePath());
 			return Pair.of(path, null);
 		}
 
-		logger.debug("TmxData will be read from Tiled TMX input file {}", file.getAbsolutePath());
+		Logger.debug("TmxData will be read from Tiled TMX input file {}", file.toAbsolutePath());
 		final RawData rawData = new TmxReader(new FileSystemResource(file)).read();
 		return Pair.of(path, rawData);
 	}
@@ -187,12 +178,12 @@ public class Tmx2NamtblSpritesApp {
 	private static void writeAsmFile(
 			final String path, final List<? extends NamtblSprite> sprites, final CommandLine command) throws IOException {
 
-		final File file = new File(path);
-		if (file.exists()) {
-			logger.warn("ASM output file {} already exists", file.getAbsolutePath());
+		final Path file = Path.of(path);
+		if (Files.exists(file)) {
+			Logger.warn("ASM output file {} already exists", file.toAbsolutePath());
 		}
 
-		try (final Writer writer = IOUtils.buffer(new FileWriter(file, Charset.defaultCharset()))) {
+		try (final Writer writer = Files.newBufferedWriter(file, Charset.defaultCharset())) {
 			for (final NamtblSprite sprite : sprites) {
 				IOUtils.writeLines(sprite.asAsm(), System.lineSeparator(), writer);
 			}
