@@ -58,11 +58,13 @@ public class Tmx2NamtblSpritesApp {
 			return;
 		}
 
+		// (before using tinylog)
+		setVerbose(command);
+
 		// Main options
 		if (showUsage(command, options)) {
 			return;
 		}
-		setVerbose(command);
 
 		// Reads the Tiled TMX file
 		final Pair<String, RawData> pair = readTmx(command);
