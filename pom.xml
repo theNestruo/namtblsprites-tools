@@ -16,6 +16,9 @@
 
 	<properties>
 		<mainClass>com.github.thenestruo.msx.namtblsprites.Tmx2NamtblSpritesApp</mainClass>
+
+		<!-- Plugins -->
+		<exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
 	</properties>
 
 	<dependencies>
@@ -33,12 +36,6 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-xml</artifactId>
-		</dependency>
-
-		<!-- Jakarta XML Binding -->
-		<dependency>
-			<groupId>jakarta.xml.bind</groupId>
-			<artifactId>jakarta.xml.bind-api</artifactId>
 		</dependency>
 
 		<!-- JUnit -->
@@ -66,29 +63,55 @@
 
 	</repositories>
 
-
 	<build>
 		<finalName>${project.artifactId}</finalName>
-
 		<plugins>
 
 			<!-- Package the artifact in an uber-jar, including its dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>shade</id>
-						<configuration>
-							<!-- Fixes: "java.util.ServiceConfigurationError: javax.xml.stream.XMLInputFactory:
-							 Provider com.ctc.wstx.stax.WstxInputFactory not found" -->
-							<minimizeJar>false</minimizeJar>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 
 		</plugins>
 	</build>
+
+	<profiles>
+
+		<!-- Local build -->
+		<profile>
+			<id>local</id>
+			<build>
+				<plugins>
+
+					<!-- Runs the application once to create AppCDS archive file -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>${exec-maven-plugin.version}</version>
+						<executions>
+							<execution>
+								<id>generate-appcds</id>
+								<phase>verify</phase><!-- (after package) -->
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>java</executable>
+									<arguments>
+										<argument>-XX:ArchiveClassesAtExit=${project.build.directory}\${project.build.finalName}.jsa</argument>
+										<argument>-jar</argument>
+										<argument>${project.build.directory}\${project.build.finalName}.jar</argument>
+										<argument>-help</argument>
+									</arguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

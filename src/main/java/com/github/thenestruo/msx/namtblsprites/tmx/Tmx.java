@@ -1,32 +1,31 @@
 package com.github.thenestruo.msx.namtblsprites.tmx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
-
-import jakarta.xml.bind.annotation.XmlAttribute;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "map")
 class Tmx {
 
-	@XmlAttribute(name = "tileset")
+	@JsonProperty("tileset")
 	private TmxTileset tileset;
 
-	@XmlAttribute(name = "layer")
+	@JsonProperty("layer")
 	private TmxLayer layer;
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class TmxTileset {
 
-		@XmlAttribute(name = "tilecount")
+		@JsonProperty("tilecount")
 		private int tileCount;
 
 		public int getTileCount() {
-			return tileCount;
+			return this.tileCount;
 		}
 
-		public void setTileCount(int tileCount) {
+		public void setTileCount(final int tileCount) {
 			this.tileCount = tileCount;
 		}
 	}
@@ -38,7 +37,7 @@ class Tmx {
 
 		private int height;
 
-		@XmlAttribute(name = "data")
+		@JsonProperty("data")
 		private TmxData data;
 
 		/**
@@ -52,7 +51,7 @@ class Tmx {
 		 * Copy constructor
 		 * @param that TmxData
 		 */
-		private TmxLayer(TmxLayer that) {
+		private TmxLayer(final TmxLayer that) {
 			this();
 
 			this.width = that.width;
@@ -77,58 +76,58 @@ class Tmx {
 			 * Copy constructor
 			 * @param that TmxData
 			 */
-			private TmxData(TmxData that) {
+			private TmxData(final TmxData that) {
 				this();
 				this.csv = that.csv;
 			}
 
 			public String getCsv() {
-				return csv;
+				return this.csv;
 			}
 
-			public void setCsv(String csv) {
+			public void setCsv(final String csv) {
 				this.csv = csv;
 			}
 		}
 
 		public int getWidth() {
-			return width;
+			return this.width;
 		}
 
-		public void setWidth(int width) {
+		public void setWidth(final int width) {
 			this.width = width;
 		}
 
 		public int getHeight() {
-			return height;
+			return this.height;
 		}
 
-		public void setHeight(int height) {
+		public void setHeight(final int height) {
 			this.height = height;
 		}
 
 		public TmxData getData() {
-			return data != null ? new TmxData(data) : null;
+			return this.data != null ? new TmxData(this.data) : null;
 		}
 
-		public void setData(TmxData data) {
+		public void setData(final TmxData data) {
 			this.data = data != null ? new TmxData(data) : null;
 		}
 	}
 
 	public TmxTileset getTileset() {
-		return tileset;
+		return this.tileset;
 	}
 
-	public void setTileset(TmxTileset tileset) {
+	public void setTileset(final TmxTileset tileset) {
 		this.tileset = tileset;
 	}
 
 	public TmxLayer getLayer() {
-		return layer != null ? new TmxLayer(layer) : null;
+		return this.layer != null ? new TmxLayer(this.layer) : null;
 	}
 
-	public void setLayer(TmxLayer layer) {
+	public void setLayer(final TmxLayer layer) {
 		this.layer = layer != null ? new TmxLayer(layer) : null;
 	}
 }
