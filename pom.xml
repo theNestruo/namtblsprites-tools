@@ -70,13 +70,25 @@
 				<artifactId>maven-shade-plugin</artifactId>
 			</plugin>
 
-			<!-- Runs the application once to create AppCDS archive file -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-			</plugin>
-
 		</plugins>
 	</build>
+
+	<profiles>
+
+		<profile>
+			<id>local</id>
+			<build>
+				<plugins>
+
+					<!-- Runs the application once to create AppCDS archive file -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
