@@ -1,22 +1,18 @@
 package com.github.thenestruo.msx.namtblsprites;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.MissingOptionException;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.help.HelpFormatter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,25 +99,26 @@ public class Tmx2NamtblSpritesApp {
 		return options;
 	}
 
-	private static boolean showUsage(final CommandLine command, final Options options) {
+	private static boolean showUsage(final CommandLine command, final Options options) throws IOException {
 
 		return command.hasOption(HELP)
 				? showUsage(options)
 				: false;
 	}
 
-	private static boolean showUsage(final Options options) {
+	private static boolean showUsage(final Options options) throws IOException {
 
 		// (prints in proper order)
-		final HelpFormatter helpFormatter = new HelpFormatter();
-		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.ISO_8859_1));
-		helpFormatter.printUsage(pw, 114, "java -jar tmx2NamtblSprites.jar");
-		for (final Option option : options.getOptions()) {
-			helpFormatter.printOptions(pw, 114, new Options().addOption(option), 2, 4);
-		}
-		helpFormatter.printWrapped(pw, 114, "  <input>    Tiled TMX input file");
-		helpFormatter.printWrapped(pw, 114, "  <output>    ASM output file (optional, defaults to <input>.asm)");
-		pw.flush();
+		HelpFormatter.builder()
+				.setShowSince(false)
+				.get().printHelp(
+					"java -jar tmx2NamtblSprites.jar",
+					"with:"
+					+ "\n<input>   Tiled TMX input file"
+					+ "\n<output>  ASM output file (optional, defaults to <input>.asm)",
+					options.getOptions(),
+					null,
+					true);
 
 		return true;
 	}

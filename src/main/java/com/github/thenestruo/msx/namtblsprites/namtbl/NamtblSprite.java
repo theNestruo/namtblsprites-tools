@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.Validate;
 
 import com.github.thenestruo.msx.namtblsprites.model.Char;
@@ -448,7 +449,7 @@ public class NamtblSprite {
 	}
 
 	private static String indent(final String s) {
-		return StringUtils.prependIfMissing(s, "\t");
+		return Strings.CS.prependIfMissing(s, "\t");
 	}
 
 	private static String asmByte(final short s) {
