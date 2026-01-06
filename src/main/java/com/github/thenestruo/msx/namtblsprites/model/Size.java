@@ -2,34 +2,30 @@ package com.github.thenestruo.msx.namtblsprites.model;
 
 import java.util.Collection;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 public class Size {
-	
+
 	public static final Size EMPTY = new Size(0, 0);
-	
-	public static final Size of(Collection<? extends Coord> coords) {
-		
-		if (CollectionUtils.isEmpty(coords)) {
+
+	public static final Size of(final Collection<? extends Coord> coords) {
+
+		if ((coords == null) || coords.isEmpty()) {
 			return EMPTY;
 		}
-		
+
 		final int minX = coords.stream().map(Coord::getX).reduce(Integer::min).orElseThrow();
 		final int minY = coords.stream().map(Coord::getY).reduce(Integer::min).orElseThrow();
 		final int maxX = coords.stream().map(Coord::getX).reduce(Integer::max).orElseThrow();
 		final int maxY = coords.stream().map(Coord::getY).reduce(Integer::max).orElseThrow();
-		
+
 		return new Size(
-				maxX - minX + 1,
-				maxY - minY + 1);
+				(maxX - minX) + 1,
+				(maxY - minY) + 1);
 	}
 
 	protected final int width;
 	protected final int height;
-	
-	public Size(int width, int height) {
-		super();
-		
+
+	public Size(final int width, final int height) {
 		this.width = width;
 		this.height = height;
 	}
@@ -45,10 +41,10 @@ public class Size {
 	}
 
 	public int getWidth() {
-		return width;
+		return this.width;
 	}
 
 	public int getHeight() {
-		return height;
+		return this.height;
 	}
 }

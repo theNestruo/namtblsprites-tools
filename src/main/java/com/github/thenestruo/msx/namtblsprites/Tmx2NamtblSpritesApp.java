@@ -1,197 +1,155 @@
 package com.github.thenestruo.msx.namtblsprites;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.MissingOptionException;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.help.HelpFormatter;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.tinylog.Logger;
 import org.tinylog.configuration.Configuration;
 
+import com.github.thenestruo.commons.io.FileSystemResource;
+import com.github.thenestruo.commons.io.Paths;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.Size;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSprite;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpriteAlignment;
 import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
-import com.github.thenestruo.util.FileSystemResource;
 
-public class Tmx2NamtblSpritesApp {
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-	private static final String HELP = "help";
-	private static final String VERBOSE = "verbose";
-	private static final String WIDTH = "width";
-	private static final String HEIGHT = "height";
-	private static final String ADD = "add";
-	private static final String BLANK = "blank";
-	private static final String NAME = "name";
-	private static final String RETURN = "return";
-	private static final String LEFT = "left";
-	private static final String RIGHT = "right";
-	private static final String ALIGN = "align";
+@Command(name = "tmx2namtblsprites", sortOptions = false)
+public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 
-	public static void main(final String[] args) throws ParseException, IOException {
+	public static void main(final String... args) {
+		new CommandLine(new Tmx2NamtblSpritesApp()).execute(args);
+	}
 
-		// Parses the command line
-		final Options options = options();
-		final CommandLine command;
-		try {
-			command = new DefaultParser().parse(options, args);
-		} catch (final MissingOptionException e) {
-			showUsage(options);
-			return;
-		}
+	@Option(names = { "-h", "--help" }, usageHelp = true, description = "shows usage")
+	private boolean help;
+
+	@Option(names = { "-v", "--verbose" }, description = "verbose execution")
+	private boolean verbose;
+
+	@Parameters(index = "0", arity = "1", paramLabel = "input", description = "Tiled TMX input file")
+	private Path inputPath;
+
+	@Parameters(index = "1",
+			arity = "0..1",
+			paramLabel = "output",
+			description = "ASM output file (optional, defaults to <input>.asm)")
+	private Path outputPath;
+
+	@Option(names = { "-width" }, required = true, description = "Sprites width (in characters) (required)")
+	private int spriteWidth;
+
+	@Option(names = { "-height" }, required = true, description = "Sprites height (in characters) (required)")
+	private int spriteHeight;
+
+	@Option(names = { "-add" }, description = "The addend for the values")
+	private int addend;
+
+	@Option(names = { "-blank" }, description = "The blank value to be ignored")
+	private int blankValue;
+
+	@Option(names = { "-name" }, description = "An identifying name for the rendering routines")
+	private String spriteName;
+
+	@Option(names = { "-return" }, description = "Return instruction")
+	private String returnInstruction;
+
+	@Option(names = { "--left" }, description = "Align left, draw to right")
+	private boolean isLeft;
+
+	@Option(names = { "--right" }, description = "Align right, draw to left")
+	private boolean isRight;
+
+	@Option(names = { "--align" }, description = "Align center, draw to right (alt. entry points for even widths)")
+	private boolean isAlign;
+
+	@Override
+	public Integer call() throws IOException {
 
 		// (before using tinylog)
-		setVerbose(command);
-
-		// Main options
-		if (showUsage(command, options)) {
-			return;
-		}
+		this.handleVerbose();
 
 		// Reads the Tiled TMX file
-		final Pair<String, RawData> pair = readTmx(command);
-		final String inputFilePath = pair.getLeft();
-		final RawData rawData = pair.getRight();
+		final RawData rawData = this.readTmx();
 		if (rawData == null) {
-			return;
+			return 10;
 		}
 		Logger.debug("Tiled TMX file read: {}", rawData.getSize());
 
 		// Builds the NAMTBL sprites
-		final List<? extends NamtblSprite> namtblSprites = toNamtblSprites(inputFilePath, rawData, command);
+		final List<? extends NamtblSprite> namtblSprites = this.toNamtblSprites(rawData);
 		Logger.debug("{} NAMTBL sprites read", namtblSprites.size());
 
 		// Writes the ASM file
-		final String asmFilePath = nextPath(command, inputFilePath + ".asm");
-		Logger.debug("{} NAMTBL sprites will be written to ASM file {}", namtblSprites.size(), asmFilePath);
-		writeAsmFile(asmFilePath, namtblSprites, command);
-		Logger.debug("ASM file {} written", asmFilePath);
+		Logger.debug("{} NAMTBL sprites will be written to ASM file {}", namtblSprites.size(), this.outputPath());
+		this.writeAsmFile(namtblSprites);
+		Logger.debug("ASM file {} written", this.outputPath());
+
+		return 0;
 	}
 
-	private static Options options() {
+	private void handleVerbose() {
 
-		final Options options = new Options();
-		options.addOption(HELP, "Shows usage");
-		options.addOption(VERBOSE, "Verbose execution");
-		options.addOption(WIDTH, true, "Sprites width (in characters) (required)");
-		options.addOption(HEIGHT, true, "Sprites height (in characters) (required)");
-		options.addOption(ADD, true, "The addend for the values");
-		options.addOption(BLANK, true, "The blank value to be ignored");
-		options.addOption(NAME, true, "An identifying name for the rendering routines");
-		options.addOption(RETURN, true, "Return instruction");
-		options.addOption(LEFT, "Align left, draw to right");
-		options.addOption(RIGHT, "Align right, draw to left");
-		options.addOption(ALIGN, "Align center, draw to right (alt. entry points for even widths)");
-		return options;
-	}
-
-	private static boolean showUsage(final CommandLine command, final Options options) throws IOException {
-
-		return command.hasOption(HELP)
-				? showUsage(options)
-				: false;
-	}
-
-	private static boolean showUsage(final Options options) throws IOException {
-
-		// (prints in proper order)
-		HelpFormatter.builder()
-				.setShowSince(false)
-				.get().printHelp(
-					"java -jar tmx2NamtblSprites.jar",
-					"with:"
-					+ "\n<input>   Tiled TMX input file"
-					+ "\n<output>  ASM output file (optional, defaults to <input>.asm)",
-					options.getOptions(),
-					null,
-					true);
-
-		return true;
-	}
-
-	private static boolean setVerbose(final CommandLine command) {
-
-		if (!command.hasOption(VERBOSE)) {
-			return false;
-		}
-
-		Configuration.set("writer.level", "debug");
-		return true;
-	}
-
-	private static Pair<String, RawData> readTmx(final CommandLine command) throws IOException {
-
-		final String path = nextPath(command, null);
-		if (path == null) {
-			return Pair.of(null, null);
-		}
-		final Path file = Path.of(path);
-		if (!Files.exists(file)) {
-			Logger.warn("Tiled TMX input file {} does not exist", file.toAbsolutePath());
-			return Pair.of(path, null);
-		}
-
-		Logger.debug("TmxData will be read from Tiled TMX input file {}", file.toAbsolutePath());
-		final RawData rawData = new TmxReader(new FileSystemResource(file)).read();
-		return Pair.of(path, rawData);
-	}
-
-	private static List<? extends NamtblSprite> toNamtblSprites(
-			final String path, final RawData rawData, final CommandLine command) throws ParseException {
-
-		final short blankValue = (short) Integer.parseUnsignedInt(command.getOptionValue(BLANK, "0"));
-		final short addend = (short) Integer.parseUnsignedInt(command.getOptionValue(ADD, "0"));
-		final String spriteName = command.getOptionValue(NAME, StringUtils.upperCase(FilenameUtils.getBaseName(path)));
-
-		final int spriteWidth = Integer.parseUnsignedInt(
-				command.getOptionValue(WIDTH, Integer.toString(rawData.getSize().getWidth())));
-		final int spriteHeight = Integer.parseUnsignedInt(
-				command.getOptionValue(HEIGHT, Integer.toString(rawData.getSize().getHeight())));
-		final Size spriteSize = new Size(spriteWidth, spriteHeight);
-
-		final NamtblSpriteAlignment alignment =
-				command.hasOption(LEFT) ? NamtblSpriteAlignment.LEFT
-				: command.hasOption(RIGHT) ? NamtblSpriteAlignment.RIGHT
-				: command.hasOption(ALIGN) ? NamtblSpriteAlignment.ALIGNED
-				: NamtblSpriteAlignment.DEFAULT;
-
-		final String returnInstruction = command.getOptionValue(RETURN);
-
-		return NamtblSpritesExtractor.extract(rawData, blankValue, addend, spriteName, spriteSize, alignment, returnInstruction);
-	}
-
-	private static void writeAsmFile(
-			final String path, final List<? extends NamtblSprite> sprites, final CommandLine command) throws IOException {
-
-		final Path file = Path.of(path);
-		if (Files.exists(file)) {
-			Logger.warn("ASM output file {} already exists", file.toAbsolutePath());
-		}
-
-		try (final Writer writer = Files.newBufferedWriter(file, Charset.defaultCharset())) {
-			for (final NamtblSprite sprite : sprites) {
-				IOUtils.writeLines(sprite.asAsm(), System.lineSeparator(), writer);
-			}
+		if (this.verbose) {
+			Configuration.set("writer.level", "debug");
 		}
 	}
 
-	private static String nextPath(final CommandLine command, final String defaultValue) {
+	private RawData readTmx() throws IOException {
 
-		final List<String> argList = command.getArgList();
-		return argList.isEmpty() ? defaultValue : argList.remove(0);
+		if (!Files.exists(this.inputPath)) {
+			Logger.warn("Tiled TMX input file {} does not exist", this.inputPath);
+			return null;
+		}
+
+		Logger.debug("TmxData will be read from Tiled TMX input file {}", this.inputPath);
+		return new TmxReader(new FileSystemResource(this.inputPath)).read();
+	}
+
+	private List<? extends NamtblSprite> toNamtblSprites(final RawData rawData) {
+
+		final Size spriteSize = new Size(this.spriteWidth, this.spriteHeight);
+
+		final NamtblSpriteAlignment alignment = this.isLeft ? NamtblSpriteAlignment.LEFT
+				: this.isRight ? NamtblSpriteAlignment.RIGHT
+						: this.isAlign ? NamtblSpriteAlignment.ALIGNED
+								: NamtblSpriteAlignment.DEFAULT;
+
+		return NamtblSpritesExtractor.extract(rawData,
+				this.blankValue, this.addend, this.spriteName, spriteSize, alignment, this.returnInstruction);
+	}
+
+	private Path outputPath() {
+
+		if (this.outputPath != null) {
+			return this.outputPath;
+		}
+
+		return Paths.append(this.inputPath, ".asm");
+	}
+
+	private void writeAsmFile(final List<? extends NamtblSprite> sprites) throws IOException {
+
+		if (Files.exists(this.outputPath())) {
+			Logger.warn("ASM output file {} already exists", this.outputPath());
+		}
+
+		final List<String> lines = new ArrayList<>();
+		for (final NamtblSprite sprite : sprites) {
+			lines.addAll(sprite.asAsm());
+		}
+
+		Files.write(this.outputPath(), lines, Charset.defaultCharset());
 	}
 }

@@ -10,11 +10,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
-import org.apache.commons.lang3.Validate;
-
+import com.github.thenestruo.commons.Bools;
+import com.github.thenestruo.commons.IntArrays;
+import com.github.thenestruo.commons.Strings;
 import com.github.thenestruo.msx.namtblsprites.model.Char;
 import com.github.thenestruo.msx.namtblsprites.model.Coord;
 import com.github.thenestruo.msx.namtblsprites.model.Size;
@@ -36,28 +34,27 @@ public class NamtblSprite {
 	private final List<Char> relativeChars;
 
 	private char[] optimizationRegisters;
-	private short[] optimizableValues;
+	private int[] optimizableValues;
 	private Coord previousOffset;
 
 	/**
 	 * Constructor
-	 * @param spriteId the literal that identifies this particular sprite
-	 * @param pChars the chars that compose the NAMTBL sprite
-	 * @param frameSize the width and height of the sprites
+	 *
+	 * @param spriteId   the literal that identifies this particular sprite
+	 * @param pChars     the chars that compose the NAMTBL sprite
+	 * @param frameSize  the width and height of the sprites
 	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
 	 */
 	public NamtblSprite(final String spriteId,
 			final List<Char> pChars, final Size frameSize,
 			final NamtblSpriteAlignment pAlignment,
 			final String returnInstruction) {
-		super();
-
-		this.spriteId = Validate.notBlank(spriteId);
+		this.spriteId = Strings.requireNotBlank(spriteId);
 		this.alignment = Objects.requireNonNull(pAlignment);
 		this.returnInstruction = Objects.toString(returnInstruction, "ret");
 
 		Objects.requireNonNull(pChars);
-		Validate.isTrue(!pChars.isEmpty());
+		Bools.requireFalse(pChars.isEmpty());
 
 		// Width / Height
 		this.actualSize = Size.of(pChars);
@@ -68,12 +65,12 @@ public class NamtblSprite {
 			Coord startingPosition;
 			switch (this.alignment) {
 			case LEFT:
-				startingPosition = new Coord(0, frameSize.getHeight() -1);
+				startingPosition = new Coord(0, frameSize.getHeight() - 1);
 				this.compensateEvenWidthCentering = false;
 				break;
 
 			case RIGHT:
-				startingPosition = new Coord(frameSize.getWidth() -1, frameSize.getHeight() -1);
+				startingPosition = new Coord(frameSize.getWidth() - 1, frameSize.getHeight() - 1);
 				this.compensateEvenWidthCentering = false;
 				break;
 
@@ -82,7 +79,7 @@ public class NamtblSprite {
 			default:
 				startingPosition = new Coord(
 						Math.floorDiv(this.actualSize.getWidth() - 1, 2),
-						frameSize.getHeight() -1);
+						frameSize.getHeight() - 1);
 				this.compensateEvenWidthCentering = canCompensateEvenWidthCentering(alignedChars, startingPosition);
 				if (this.compensateEvenWidthCentering) {
 					startingPosition = startingPosition.add(ONE_TO_RIGHT);
@@ -112,7 +109,7 @@ public class NamtblSprite {
 				lines.addAll(indent(this.asmPrepareOptimizableValues()));
 				lines.addAll(indent(this.asmInstructions1xN()));
 			}
-			lines.add(indent(returnInstruction));
+			lines.add(indent(this.returnInstruction));
 
 		} else {
 
@@ -121,51 +118,48 @@ public class NamtblSprite {
 			lines.add(indent("ex\tde, hl"));
 			lines.addAll(indent(this.asmPrepareOptimizableValues()));
 			lines.addAll(indent(this.asmInstructions()));
-			lines.add(indent(returnInstruction));
+			lines.add(indent(this.returnInstruction));
 		}
 
 		return lines;
 	}
 
-	private List<String> asmHeader(boolean allowImplicitCentering) {
+	private List<String> asmHeader(final boolean allowImplicitCentering) {
 
 		switch (this.alignment) {
-			case DEFAULT:
-			{
-				final List<String> lines = new ArrayList<>();
-				lines.add(
+		case DEFAULT: {
+			final List<String> lines = new ArrayList<>();
+			lines.add(
 					String.format("%s: ; %s", this.spriteId, this.actualSize));
-				if (this.actualSize.getWidth() % 2 == 0) {
-					lines.add(indent(this.compensateEvenWidthCentering
-							? "; (implicit even width centering => (+1, 0))"
-							: "dec\tde\t; (even width centering)"));
-				}
-				return lines;
+			if ((this.actualSize.getWidth() % 2) == 0) {
+				lines.add(indent(this.compensateEvenWidthCentering
+						? "; (implicit even width centering => (+1, 0))"
+						: "dec\tde\t; (even width centering)"));
 			}
+			return lines;
+		}
 
-			case ALIGNED:
-			{
-				if (this.compensateEvenWidthCentering) {
-					return Arrays.asList(
-							String.format("%s_R: ; %s", this.spriteId, this.actualSize),
-							indent("inc\tde\t; (+1, 0)"),
-							String.format("%s_L: ; %s", this.spriteId, this.actualSize));
+		case ALIGNED: {
+			if (this.compensateEvenWidthCentering) {
+				return Arrays.asList(
+						String.format("%s_R: ; %s", this.spriteId, this.actualSize),
+						indent("inc\tde\t; (+1, 0)"),
+						String.format("%s_L: ; %s", this.spriteId, this.actualSize));
 
-				} else {
-					final List<String> lines = new ArrayList<>();
-					lines.add(String.format("%s_L: ; %s", this.spriteId, this.actualSize));
-					if (this.actualSize.getWidth() % 2 == 0) {
-						lines.add(indent("dec\tde\t; (-1, 0)"));
-					}
-					lines.add(String.format("%s_R: ; %s", this.spriteId, this.actualSize));
-					return lines;
-				}
 			}
+			final List<String> lines = new ArrayList<>();
+			lines.add(String.format("%s_L: ; %s", this.spriteId, this.actualSize));
+			if ((this.actualSize.getWidth() % 2) == 0) {
+				lines.add(indent("dec\tde\t; (-1, 0)"));
+			}
+			lines.add(String.format("%s_R: ; %s", this.spriteId, this.actualSize));
+			return lines;
+		}
 
-			case LEFT:
-			case RIGHT:
-			default:
-				return Collections.singletonList(
+		case LEFT:
+		case RIGHT:
+		default:
+			return Collections.singletonList(
 					String.format("%s: ; %s", this.spriteId, this.actualSize));
 		}
 	}
@@ -176,7 +170,7 @@ public class NamtblSprite {
 	private List<String> asmInstructions1x1() {
 
 		return Arrays.asList(
-				String.format("ld\ta, %s", asmByteOptimizable(this.relativeChars.iterator().next())),
+				String.format("ld\ta, %s", this.asmByteOptimizable(this.relativeChars.iterator().next())),
 				"ld\t(de), a");
 	}
 
@@ -192,11 +186,10 @@ public class NamtblSprite {
 		lines.add("ld\tbc, -NAMTBL_BUFFER_WIDTH");
 		for (final Char c : this.relativeChars) {
 			lines.addAll(Collections.nCopies(-c.getY(), "add\thl, bc\t; (0, -1)"));
-			lines.add(String.format("ld\t(hl), %s", asmByteOptimizable(c)));
+			lines.add(String.format("ld\t(hl), %s", this.asmByteOptimizable(c)));
 		}
 		return lines;
 	}
-
 
 	/**
 	 * @return the asm lines of code to render this particular sprite
@@ -204,7 +197,7 @@ public class NamtblSprite {
 	private List<String> asmInstructions() {
 
 		final List<String> lines = new ArrayList<>();
-		for (final ListIterator<Char> lit = this.relativeChars.listIterator(); lit.hasNext(); ) {
+		for (final ListIterator<Char> lit = this.relativeChars.listIterator(); lit.hasNext();) {
 			final Char c = lit.next();
 			lines.addAll(this.asmOffsetInstructions(c));
 			lines.add(String.format("ld\t(hl), %s", this.asmByteOptimizable(c)));
@@ -232,8 +225,8 @@ public class NamtblSprite {
 				return Collections.nCopies(
 						Math.abs(x),
 						x > 0
-							? "inc\thl\t; (+1, 0)"
-							: "dec\thl\t; (-1, 0)");
+								? "inc\thl\t; (+1, 0)"
+								: "dec\thl\t; (-1, 0)");
 			}
 		}
 
@@ -247,7 +240,7 @@ public class NamtblSprite {
 				// Best case scenario (same offset)
 				if (offset.equals(this.previousOffset)) {
 					return Collections.singletonList(
-						String.format("add\thl, bc\t; %s", offset));
+							String.format("add\thl, bc\t; %s", offset));
 				}
 
 				// "inc"/"dec" optimized cases
@@ -284,8 +277,8 @@ public class NamtblSprite {
 
 	private String asmByteOptimizable(final Char c) {
 
-		final short value = c.getValue();
-		final int optimizationIndex = ArrayUtils.indexOf(this.optimizableValues, value);
+		final int value = c.getValue();
+		final int optimizationIndex = IntArrays.indexOf(this.optimizableValues, value);
 		return optimizationIndex >= 0
 				? Character.toString(this.optimizationRegisters[optimizationIndex])
 				: asmByte(c.getValue());
@@ -294,18 +287,17 @@ public class NamtblSprite {
 	private List<String> asmPrepareOptimizableValues() {
 
 		// Optimizable values
-		final short[] lOptimizableValues = ArrayUtils.toPrimitive(
-				this.findMostCommonValues(3, 3).toArray(new Short[0]));
+		final List<Integer> lOptimizableValues = this.findMostCommonValues(3, 3);
 
-		switch (lOptimizableValues.length) {
+		switch (lOptimizableValues.size()) {
 		case 0:
-			this.optimizationRegisters = ArrayUtils.EMPTY_CHAR_ARRAY;
-			this.optimizableValues = ArrayUtils.EMPTY_SHORT_ARRAY;
+			this.optimizationRegisters = new char[] {};
+			this.optimizableValues = new int[] {};
 			return Collections.emptyList();
 
 		case 1:
-			this.optimizationRegisters = new char[] {'a'};
-			this.optimizableValues = lOptimizableValues;
+			this.optimizationRegisters = new char[] { 'a' };
+			this.optimizableValues = IntArrays.asIntArray(lOptimizableValues);
 			return Collections.singletonList(String.format(
 					"ld\t%s, %s\t; (optimization for %d ocurrences)",
 					this.optimizationRegisters[0],
@@ -313,8 +305,8 @@ public class NamtblSprite {
 					this.ocurrencesOf(this.optimizableValues[0])));
 
 		case 2:
-			this.optimizationRegisters = new char[] {'d', 'e'};
-			this.optimizableValues = lOptimizableValues;
+			this.optimizationRegisters = new char[] { 'd', 'e' };
+			this.optimizableValues = IntArrays.asIntArray(lOptimizableValues);
 			return Collections.singletonList(String.format(
 					"ld\t%s%s, %s << 8 + %s\t; (optimization for %d and %d ocurrences)",
 					this.optimizationRegisters[0],
@@ -326,8 +318,8 @@ public class NamtblSprite {
 
 		case 3:
 		default:
-			this.optimizationRegisters = new char[] {'a', 'd', 'e'};
-			this.optimizableValues = ArrayUtils.subarray(lOptimizableValues, 0, 3);
+			this.optimizationRegisters = new char[] { 'a', 'd', 'e' };
+			this.optimizableValues = IntArrays.asIntArray(lOptimizableValues.subList(0, 3));
 			return Arrays.asList(
 					String.format("ld\t%s, %s\t; (optimization for %d ocurrences)",
 							this.optimizationRegisters[0],
@@ -348,20 +340,20 @@ public class NamtblSprite {
 		final List<String> lines = new ArrayList<>();
 		for (int i = 0, n = this.optimizableValues.length; i < n; i++) {
 
-			final short value = this.optimizableValues[i];
+			final int value = this.optimizableValues[i];
 			final long ocurrences = this.ocurrencesOf(skip, value);
 
-			final short valueMinus1 = (short) (value - 1);
-			final long ocurrencesOfMinus1 = ArrayUtils.contains(this.optimizableValues, valueMinus1)
+			final int valueMinus1 = value - 1;
+			final long ocurrencesOfMinus1 = IntArrays.contains(this.optimizableValues, valueMinus1)
 					? -1L
 					: this.ocurrencesOf(skip, valueMinus1);
 
 			final short valuePlus1 = (short) (value + 1);
-			final long ocurrencesOfPlus1 = ArrayUtils.contains(this.optimizableValues, valuePlus1)
+			final long ocurrencesOfPlus1 = IntArrays.contains(this.optimizableValues, valuePlus1)
 					? -1L
 					: this.ocurrencesOf(skip, valuePlus1);
 
-			if ((ocurrencesOfMinus1 - ocurrences >= 2) && (ocurrencesOfMinus1 >= ocurrencesOfPlus1)) {
+			if (((ocurrencesOfMinus1 - ocurrences) >= 2) && (ocurrencesOfMinus1 >= ocurrencesOfPlus1)) {
 
 				// Update optimization to value - 1
 				lines.add(String.format("dec\t%s\t; (optimization for %d > %d ocurrences)",
@@ -372,7 +364,7 @@ public class NamtblSprite {
 				continue;
 			}
 
-			if (ocurrencesOfPlus1 - ocurrences >= 2) {
+			if ((ocurrencesOfPlus1 - ocurrences) >= 2) {
 
 				// Update optimization to value + 1
 				lines.add(String.format("inc\t%s\t; (optimization for %d > %d ocurrences)",
@@ -386,38 +378,38 @@ public class NamtblSprite {
 		return lines;
 	}
 
-	private List<Short> findMostCommonValues(final int atLeast, final int limit) {
+	private List<Integer> findMostCommonValues(final int atLeast, final int limit) {
 
 		return this.findMostCommonValues(0L, atLeast, limit);
 	}
 
-	private List<Short> findMostCommonValues(final long skip, final int atLeast, final int limit) {
+	private List<Integer> findMostCommonValues(final long skip, final int atLeast, final int limit) {
 
 		return this.relativeChars
 				.stream()
-				.skip((long) skip)
+				.skip(skip)
 				.collect(Collectors.groupingBy(Char::getValue, Collectors.counting()))
 				.entrySet()
 				.stream()
 				.filter(entry -> entry.getValue() >= atLeast)
-				.sorted(Map.Entry.<Short, Long> comparingByValue().reversed())
+				.sorted(Map.Entry.<Integer, Long>comparingByValue().reversed())
 				.limit(limit)
 				.map(Entry::getKey)
 				.collect(Collectors.toList());
 	}
 
-	private long ocurrencesOf(final short value) {
+	private long ocurrencesOf(final int value) {
 
 		return this.ocurrencesOf(0L, value);
 	}
 
-	private long ocurrencesOf(final long skip, final short value) {
+	private long ocurrencesOf(final long skip, final int value) {
 
 		return this.relativeChars
 				.stream()
 				.skip(skip)
 				.map(Char::getValue)
-				.filter(v -> v.shortValue() == value)
+				.filter(v -> v.intValue() == value)
 				.count();
 	}
 
@@ -433,9 +425,10 @@ public class NamtblSprite {
 		return alignedChars;
 	}
 
-	private static boolean canCompensateEvenWidthCentering(final List<Char> alignedChars, final Coord startingPosition) {
+	private static boolean canCompensateEvenWidthCentering(final List<Char> alignedChars,
+			final Coord startingPosition) {
 
-		if (Size.of(alignedChars).getWidth() % 2 != 0) {
+		if ((Size.of(alignedChars).getWidth() % 2) != 0) {
 			return false;
 		}
 
@@ -445,14 +438,14 @@ public class NamtblSprite {
 	}
 
 	private static List<String> indent(final List<String> list) {
-		return list.stream().map(s -> indent(s)).collect(Collectors.toList());
+		return list.stream().map(NamtblSprite::indent).collect(Collectors.toList());
 	}
 
 	private static String indent(final String s) {
-		return Strings.CS.prependIfMissing(s, "\t");
+		return Strings.prependIfMissing(s, "\t");
 	}
 
-	private static String asmByte(final short s) {
-		return "$" + StringUtils.leftPad(StringUtils.right(Integer.toHexString(s), 2), 2, '0');
+	private static String asmByte(final int s) {
+		return String.format("$%02x", s);
 	}
 }

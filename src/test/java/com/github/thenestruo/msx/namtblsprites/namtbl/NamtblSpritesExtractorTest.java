@@ -6,10 +6,10 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.github.thenestruo.commons.io.ClassPathResource;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.Size;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
-import com.github.thenestruo.util.ClassPathResource;
 
 public class NamtblSpritesExtractorTest {
 

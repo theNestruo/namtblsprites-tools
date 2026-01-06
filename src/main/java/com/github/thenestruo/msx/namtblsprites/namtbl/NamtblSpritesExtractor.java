@@ -15,14 +15,15 @@ public class NamtblSpritesExtractor {
 
 	/**
 	 * Builds the {@link NamtblSprite NAMTBL sprites}
-	 * @param data the bidimensional chunk of raw data
+	 *
+	 * @param data       the bidimensional chunk of raw data
 	 * @param blankValue the value that represents the absence of character
 	 * @param spriteName the name of the sprite
 	 * @param spriteSize the width and height of the sprites
 	 * @return the NAMTBL sprites in top to down, then left to right, order
 	 */
 	public static List<NamtblSprite> extract(
-			final RawData data, final short blankValue, final short addend,
+			final RawData data, final int blankValue, final int addend,
 			final String spriteName, final Size spriteSize,
 			final NamtblSpriteAlignment alignment,
 			final String returnInstruction) {
@@ -46,6 +47,5 @@ public class NamtblSpritesExtractor {
 	}
 
 	private NamtblSpritesExtractor() {
-		super();
 	}
 }
