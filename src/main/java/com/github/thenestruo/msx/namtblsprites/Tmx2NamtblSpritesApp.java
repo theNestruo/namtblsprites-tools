@@ -21,6 +21,7 @@ import com.github.thenestruo.msx.namtblsprites.namtbl.NamtblSpritesExtractor;
 import com.github.thenestruo.msx.namtblsprites.tmx.TmxReader;
 
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -65,14 +66,20 @@ public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 	@Option(names = { "-return" }, description = "Return instruction")
 	private String returnInstruction;
 
-	@Option(names = { "--left" }, description = "Align left, draw to right")
-	private boolean isLeft;
+	@ArgGroup
+	private Alignment alignment;
 
-	@Option(names = { "--right" }, description = "Align right, draw to left")
-	private boolean isRight;
+	static class Alignment {
 
-	@Option(names = { "--align" }, description = "Align center, draw to right (alt. entry points for even widths)")
-	private boolean isAlign;
+		@Option(names = { "--left" }, description = "Align left, draw to right")
+		private boolean isLeft;
+
+		@Option(names = { "--right" }, description = "Align right, draw to left")
+		private boolean isRight;
+
+		@Option(names = { "--align" }, description = "Align center, draw to right (alt. entry points for even widths)")
+		private boolean isAlign;
+	}
 
 	@Override
 	public Integer call() throws IOException {
@@ -121,10 +128,10 @@ public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 
 		final Size spriteSize = new Size(this.spriteWidth, this.spriteHeight);
 
-		final NamtblSpriteAlignment alignment = this.isLeft ? NamtblSpriteAlignment.LEFT
-				: this.isRight ? NamtblSpriteAlignment.RIGHT
-						: this.isAlign ? NamtblSpriteAlignment.ALIGNED
-								: NamtblSpriteAlignment.DEFAULT;
+		final NamtblSpriteAlignment alignment = this.alignment.isLeft ? NamtblSpriteAlignment.LEFT
+				: this.alignment.isRight ? NamtblSpriteAlignment.RIGHT
+				: this.alignment.isAlign ? NamtblSpriteAlignment.ALIGNED
+				: NamtblSpriteAlignment.DEFAULT;
 
 		return NamtblSpritesExtractor.extract(rawData,
 				this.blankValue, this.addend, this.spriteName, spriteSize, alignment, this.returnInstruction);
