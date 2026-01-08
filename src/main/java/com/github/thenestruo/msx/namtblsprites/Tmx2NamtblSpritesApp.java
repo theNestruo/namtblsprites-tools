@@ -30,7 +30,7 @@ import picocli.CommandLine.Parameters;
 public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 
 	public static void main(final String... args) {
-		new CommandLine(new Tmx2NamtblSpritesApp()).execute(args);
+		System.exit(new CommandLine(new Tmx2NamtblSpritesApp()).execute(args));
 	}
 
 	@Option(names = { "-h", "--help" }, usageHelp = true, description = "shows usage")
@@ -71,13 +71,13 @@ public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 
 	static class Alignment {
 
-		@Option(names = { "--left" }, description = "Align left, draw to right")
+		@Option(names = { "-left" }, description = "Align left, draw to right")
 		private boolean isLeft;
 
-		@Option(names = { "--right" }, description = "Align right, draw to left")
+		@Option(names = { "-right" }, description = "Align right, draw to left")
 		private boolean isRight;
 
-		@Option(names = { "--align" }, description = "Align center, draw to right (alt. entry points for even widths)")
+		@Option(names = { "-align" }, description = "Align center, draw to right (alt. entry points for even widths)")
 		private boolean isAlign;
 	}
 
@@ -128,10 +128,11 @@ public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 
 		final Size spriteSize = new Size(this.spriteWidth, this.spriteHeight);
 
-		final NamtblSpriteAlignment alignment = this.alignment.isLeft ? NamtblSpriteAlignment.LEFT
+		final NamtblSpriteAlignment alignment = this.alignment == null ? NamtblSpriteAlignment.DEFAULT
+				: this.alignment.isLeft ? NamtblSpriteAlignment.LEFT
 				: this.alignment.isRight ? NamtblSpriteAlignment.RIGHT
 				: this.alignment.isAlign ? NamtblSpriteAlignment.ALIGNED
-				: NamtblSpriteAlignment.DEFAULT;
+				: NamtblSpriteAlignment.DEFAULT; // (should never happen)
 
 		return NamtblSpritesExtractor.extract(rawData,
 				this.blankValue, this.addend, this.spriteName, spriteSize, alignment, this.returnInstruction);
