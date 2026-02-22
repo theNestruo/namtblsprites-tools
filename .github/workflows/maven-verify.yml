@@ -1,4 +1,4 @@
-name: CI and build on main
+name: Verify
 
 permissions:
   contents: read
