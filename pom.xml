@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>com.github.thenestruo</groupId>
 		<artifactId>thenestruo-cli-parent</artifactId>
-		<version>5.3</version>
+		<version>2026.4</version>
 		<relativePath />
 	</parent>
 
 	<groupId>com.github.thenestruo.msx.namtblsprites</groupId>
 	<artifactId>tmx2namtblsprites</artifactId>
-	<version>2026.02</version>
+	<version>2026.4</version>
 
 	<properties>
 		<mainClass>com.github.thenestruo.msx.namtblsprites.Tmx2NamtblSpritesApp</mainClass>
