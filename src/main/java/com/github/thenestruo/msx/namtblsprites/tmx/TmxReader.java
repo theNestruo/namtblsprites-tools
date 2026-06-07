@@ -5,12 +5,12 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.thenestruo.commons.io.ReadableResource;
 import com.github.thenestruo.msx.namtblsprites.model.RawData;
 import com.github.thenestruo.msx.namtblsprites.model.Size;
+
+import tools.jackson.dataformat.xml.XmlMapper;
 
 /**
  * Reads a Tiled {@code .tmx} file
@@ -31,13 +31,13 @@ public class TmxReader {
 
 			// final int tileCount = tmx.getTileset().getTileCount();
 
-			final Tmx.TmxLayer layer = tmx.getLayer();
+			final Tmx.TmxLayer layer = tmx.layer();
 
-			final List<Integer> layerData = Arrays.stream(layer.getData().getCsv().split("\\s*,\\s*"))
+			final List<Integer> layerData = Arrays.stream(layer.data().csv().split("\\s*,\\s*"))
 					.map(s -> Integer.parseInt(s.strip()))
-					.collect(Collectors.toList());
+					.toList();
 
-			final Size layerSize = new Size(layer.getWidth(), layer.getHeight());
+			final Size layerSize = new Size(layer.width(), layer.height());
 
 			return new RawData(layerData, layerSize);
 		}

@@ -46,7 +46,7 @@ public class Char extends Coord {
 	@Override
 	public String toString() {
 
-		return String.format("%s,%d", super.toString(), this.value);
+		return "%s,%d".formatted(super.toString(), this.value);
 	}
 
 	public Char relativeTo(final Coord position) {

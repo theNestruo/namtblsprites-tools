@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>com.github.thenestruo</groupId>
 		<artifactId>thenestruo-cli-parent</artifactId>
-		<version>2026.4</version>
+		<version>2026.6</version>
 		<relativePath />
 	</parent>
 
 	<groupId>com.github.thenestruo.msx.namtblsprites</groupId>
 	<artifactId>tmx2namtblsprites</artifactId>
-	<version>2026.4</version>
+	<version>2026.6</version>
 
 	<properties>
 		<mainClass>com.github.thenestruo.msx.namtblsprites.Tmx2NamtblSpritesApp</mainClass>
@@ -22,11 +22,11 @@
 
 		<!-- Jackson -->
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
+			<groupId>tools.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<groupId>tools.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-xml</artifactId>
 		</dependency>
 

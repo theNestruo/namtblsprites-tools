@@ -129,8 +129,7 @@ public class NamtblSprite {
 		switch (this.alignment) {
 		case DEFAULT: {
 			final List<String> lines = new ArrayList<>();
-			lines.add(
-					String.format("%s: ; %s", this.spriteId, this.actualSize));
+			lines.add("%s: ; %s".formatted(this.spriteId, this.actualSize));
 			if ((this.actualSize.getWidth() % 2) == 0) {
 				lines.add(indent(this.compensateEvenWidthCentering
 						? "; (implicit even width centering => (+1, 0))"
@@ -142,25 +141,25 @@ public class NamtblSprite {
 		case ALIGNED: {
 			if (this.compensateEvenWidthCentering) {
 				return Arrays.asList(
-						String.format("%s_R: ; %s", this.spriteId, this.actualSize),
+						"%s_R: ; %s".formatted(this.spriteId, this.actualSize),
 						indent("inc\tde\t; (+1, 0)"),
-						String.format("%s_L: ; %s", this.spriteId, this.actualSize));
+						"%s_L: ; %s".formatted(this.spriteId, this.actualSize));
 
 			}
 			final List<String> lines = new ArrayList<>();
-			lines.add(String.format("%s_L: ; %s", this.spriteId, this.actualSize));
+			lines.add("%s_L: ; %s".formatted(this.spriteId, this.actualSize));
 			if ((this.actualSize.getWidth() % 2) == 0) {
 				lines.add(indent("dec\tde\t; (-1, 0)"));
 			}
-			lines.add(String.format("%s_R: ; %s", this.spriteId, this.actualSize));
+			lines.add("%s_R: ; %s".formatted(this.spriteId, this.actualSize));
 			return lines;
 		}
 
 		case LEFT:
 		case RIGHT:
 		default:
-			return Collections.singletonList(
-					String.format("%s: ; %s", this.spriteId, this.actualSize));
+			return List.of(
+					"%s: ; %s".formatted(this.spriteId, this.actualSize));
 		}
 	}
 
@@ -170,7 +169,7 @@ public class NamtblSprite {
 	private List<String> asmInstructions1x1() {
 
 		return Arrays.asList(
-				String.format("ld\ta, %s", this.asmByteOptimizable(this.relativeChars.iterator().next())),
+				"ld\ta, %s".formatted(this.asmByteOptimizable(this.relativeChars.iterator().next())),
 				"ld\t(de), a");
 	}
 
@@ -186,7 +185,7 @@ public class NamtblSprite {
 		lines.add("ld\tbc, -NAMTBL_BUFFER_WIDTH");
 		for (final Char c : this.relativeChars) {
 			lines.addAll(Collections.nCopies(-c.getY(), "add\thl, bc\t; (0, -1)"));
-			lines.add(String.format("ld\t(hl), %s", this.asmByteOptimizable(c)));
+			lines.add("ld\t(hl), %s".formatted(this.asmByteOptimizable(c)));
 		}
 		return lines;
 	}
@@ -200,7 +199,7 @@ public class NamtblSprite {
 		for (final ListIterator<Char> lit = this.relativeChars.listIterator(); lit.hasNext();) {
 			final Char c = lit.next();
 			lines.addAll(this.asmOffsetInstructions(c));
-			lines.add(String.format("ld\t(hl), %s", this.asmByteOptimizable(c)));
+			lines.add("ld\t(hl), %s".formatted(this.asmByteOptimizable(c)));
 			lines.addAll(this.asmUpdateOptimizableValues(lit.nextIndex()));
 		}
 		return lines;
@@ -217,7 +216,7 @@ public class NamtblSprite {
 
 			// (should never happen)
 			if (x == 0) {
-				return Collections.emptyList();
+				return List.of();
 			}
 
 			// Optimized cases
@@ -239,36 +238,35 @@ public class NamtblSprite {
 
 				// Best case scenario (same offset)
 				if (offset.equals(this.previousOffset)) {
-					return Collections.singletonList(
-							String.format("add\thl, bc\t; %s", offset));
+					return List.of(
+							"add\thl, bc\t; %s".formatted(offset));
 				}
 
 				// "inc"/"dec" optimized cases
 				if (offset.equals(this.previousOffset.add(ONE_TO_RIGHT))) {
 					return Arrays.asList(
-							String.format("inc\tc\t; %s -> %s", this.previousOffset, offset),
-							String.format("add\thl, bc\t ; %s", offset));
+							"inc\tc\t; %s -> %s".formatted(this.previousOffset, offset),
+							"add\thl, bc\t ; %s".formatted(offset));
 				}
 				if (offset.equals(this.previousOffset.add(ONE_TO_LEFT))) {
 					return Arrays.asList(
-							String.format("dec\tc\t; %s -> %s", this.previousOffset, offset),
-							String.format("add\thl, bc\t; %s", offset));
+							"dec\tc\t; %s -> %s".formatted(this.previousOffset, offset),
+							"add\thl, bc\t; %s".formatted(offset));
 				}
 
 				// "ld c,n" optimized cases
 				if (Integer.signum(x) == Integer.signum(this.previousOffset.getX())) {
 					return Arrays.asList(
-							String.format(
-									"ld\tc, $00ff AND (%+d %+d*NAMTBL_BUFFER_WIDTH)\t; %s -> %s",
-									x, y, this.previousOffset, offset),
-							String.format("add\thl, bc\t; %s", offset));
+							"ld\tc, $00ff AND (%+d %+d*NAMTBL_BUFFER_WIDTH)\t; %s -> %s"
+									.formatted(x, y, this.previousOffset, offset),
+							"add\thl, bc\t; %s".formatted(offset));
 				}
 			}
 
 			// Non-optimizable case (or first offset)
 			return Arrays.asList(
-					String.format("ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s", x, y, offset),
-					String.format("add\thl, bc\t; %s", offset));
+					"ld\tbc, %d %+d*NAMTBL_BUFFER_WIDTH\t; %s".formatted(x, y, offset),
+					"add\thl, bc\t; %s".formatted(offset));
 
 		} finally {
 			this.previousOffset = offset;
@@ -293,39 +291,39 @@ public class NamtblSprite {
 		case 0:
 			this.optimizationRegisters = new char[] {};
 			this.optimizableValues = new int[] {};
-			return Collections.emptyList();
+			return List.of();
 
 		case 1:
 			this.optimizationRegisters = new char[] { 'a' };
 			this.optimizableValues = IntArrays.asIntArray(lOptimizableValues);
-			return Collections.singletonList(String.format(
-					"ld\t%s, %s\t; (optimization for %d ocurrences)",
-					this.optimizationRegisters[0],
-					asmByte(this.optimizableValues[0]),
-					this.ocurrencesOf(this.optimizableValues[0])));
+			return List.of(
+					"ld\t%s, %s\t; (optimization for %d ocurrences)".formatted(
+						this.optimizationRegisters[0],
+						asmByte(this.optimizableValues[0]),
+						this.ocurrencesOf(this.optimizableValues[0])));
 
 		case 2:
 			this.optimizationRegisters = new char[] { 'd', 'e' };
 			this.optimizableValues = IntArrays.asIntArray(lOptimizableValues);
-			return Collections.singletonList(String.format(
-					"ld\t%s%s, %s << 8 + %s\t; (optimization for %d and %d ocurrences)",
-					this.optimizationRegisters[0],
-					this.optimizationRegisters[1],
-					asmByte(this.optimizableValues[0]),
-					asmByte(this.optimizableValues[1]),
-					this.ocurrencesOf(this.optimizableValues[0]),
-					this.ocurrencesOf(this.optimizableValues[1])));
+			return List.of(
+					"ld\t%s%s, %s << 8 + %s\t; (optimization for %d and %d ocurrences)".formatted(
+						this.optimizationRegisters[0],
+						this.optimizationRegisters[1],
+						asmByte(this.optimizableValues[0]),
+						asmByte(this.optimizableValues[1]),
+						this.ocurrencesOf(this.optimizableValues[0]),
+						this.ocurrencesOf(this.optimizableValues[1])));
 
 		case 3:
 		default:
 			this.optimizationRegisters = new char[] { 'a', 'd', 'e' };
 			this.optimizableValues = IntArrays.asIntArray(lOptimizableValues.subList(0, 3));
 			return Arrays.asList(
-					String.format("ld\t%s, %s\t; (optimization for %d ocurrences)",
+					"ld\t%s, %s\t; (optimization for %d ocurrences)".formatted(
 							this.optimizationRegisters[0],
 							asmByte(this.optimizableValues[0]),
 							this.ocurrencesOf(this.optimizableValues[0])),
-					String.format("ld\t%s%s, %s << 8 + %s\t; (optimization for %d and %d ocurrences)",
+					"ld\t%s%s, %s << 8 + %s\t; (optimization for %d and %d ocurrences)".formatted(
 							this.optimizationRegisters[1],
 							this.optimizationRegisters[2],
 							asmByte(this.optimizableValues[1]),
@@ -356,7 +354,7 @@ public class NamtblSprite {
 			if (((ocurrencesOfMinus1 - ocurrences) >= 2) && (ocurrencesOfMinus1 >= ocurrencesOfPlus1)) {
 
 				// Update optimization to value - 1
-				lines.add(String.format("dec\t%s\t; (optimization for %d > %d ocurrences)",
+				lines.add("dec\t%s\t; (optimization for %d > %d ocurrences)".formatted(
 						this.optimizationRegisters[i],
 						ocurrencesOfMinus1,
 						ocurrences));
@@ -367,7 +365,7 @@ public class NamtblSprite {
 			if ((ocurrencesOfPlus1 - ocurrences) >= 2) {
 
 				// Update optimization to value + 1
-				lines.add(String.format("inc\t%s\t; (optimization for %d > %d ocurrences)",
+				lines.add("inc\t%s\t; (optimization for %d > %d ocurrences)".formatted(
 						this.optimizationRegisters[i],
 						ocurrencesOfPlus1,
 						ocurrences));
@@ -446,6 +444,6 @@ public class NamtblSprite {
 	}
 
 	private static String asmByte(final int s) {
-		return String.format("$%02x", s);
+		return"$%02x".formatted(s);
 	}
 }

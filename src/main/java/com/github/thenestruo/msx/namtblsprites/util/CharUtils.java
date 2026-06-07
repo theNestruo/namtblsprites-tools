@@ -14,7 +14,7 @@ public class CharUtils {
 			final List<Char> absoluteChars, final Coord startingPosition) {
 
 		if ((absoluteChars == null) || absoluteChars.isEmpty()) {
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		Coord position = Objects.requireNonNull(startingPosition);

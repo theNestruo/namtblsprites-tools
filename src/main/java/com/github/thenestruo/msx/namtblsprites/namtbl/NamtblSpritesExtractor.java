@@ -33,7 +33,7 @@ public class NamtblSpritesExtractor {
 
 		// Slices the chunk into raw sprites
 		for (final RawData slice : data.slice(spriteSize)) {
-			final String spriteId = String.format("%s_%d", spriteName, i++);
+			final String spriteId = "%s_%d".formatted(spriteName, i++);
 
 			// Extracts the chars of the sprite
 			final List<Char> spriteChars = slice.asChars(blankValue, addend);

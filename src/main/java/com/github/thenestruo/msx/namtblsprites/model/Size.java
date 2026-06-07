@@ -33,7 +33,7 @@ public class Size {
 	@Override
 	public String toString() {
 
-		return String.format("%dx%d", this.width, this.height);
+		return "%dx%d".formatted(this.width, this.height);
 	}
 
 	public int size() {

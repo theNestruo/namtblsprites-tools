@@ -53,7 +53,7 @@ public class Coord {
 	@Override
 	public String toString() {
 
-		return String.format("(%+d, %+d)", this.x, this.y);
+		return "(%+d, %+d)".formatted(this.x, this.y);
 	}
 
 	public Coord coords() {
