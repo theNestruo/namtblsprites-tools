@@ -40,7 +40,7 @@ public class NamtblSpritesExtractorTest {
 	private List<NamtblSprite> extractFromExample(
 			final NamtblSpriteAlignment alignment) throws IOException {
 
-		final RawData rawData = new TmxReader(ClassPathResource.from("example.tmx")).read();
+		final RawData rawData = TmxReader.from(ClassPathResource.from("example.tmx")).read();
 		return NamtblSpritesExtractor.extract(
 				rawData, (short) 64, (short) 0, "EXAMPLE", new Size(3, 3), alignment, null);
 	}

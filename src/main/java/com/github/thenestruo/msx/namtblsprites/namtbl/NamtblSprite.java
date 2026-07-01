@@ -23,6 +23,30 @@ import com.github.thenestruo.msx.namtblsprites.util.CharUtils;
  */
 public class NamtblSprite {
 
+	/**
+	 * Builder
+	 * @param spriteId   the literal that identifies this particular sprite
+	 * @param pChars     the chars that compose the NAMTBL sprite
+	 * @param frameSize  the width and height of the sprites
+	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
+	 * @return NamtblSprite instance
+	 */
+	public static NamtblSprite of(final String spriteId,
+			final List<Char> pChars, final Size frameSize,
+			final NamtblSpriteAlignment pAlignment,
+			final String returnInstruction) {
+
+		Objects.requireNonNull(pChars);
+		Bools.requireFalse(pChars.isEmpty());
+
+		return new NamtblSprite(
+				Strings.requireNotBlank(spriteId),
+				pChars,
+				Objects.requireNonNull(frameSize),
+				Objects.requireNonNull(pAlignment),
+				returnInstruction);
+	}
+
 	private static final Coord ONE_TO_RIGHT = new Coord(1, 0);
 	private static final Coord ONE_TO_LEFT = new Coord(-1, 0);
 
@@ -37,24 +61,13 @@ public class NamtblSprite {
 	private int[] optimizableValues;
 	private Coord previousOffset;
 
-	/**
-	 * Constructor
-	 *
-	 * @param spriteId   the literal that identifies this particular sprite
-	 * @param pChars     the chars that compose the NAMTBL sprite
-	 * @param frameSize  the width and height of the sprites
-	 * @param pAlignment the NAMTBL sprite alignment and drawing direciton
-	 */
-	public NamtblSprite(final String spriteId,
+	private NamtblSprite(final String spriteId,
 			final List<Char> pChars, final Size frameSize,
 			final NamtblSpriteAlignment pAlignment,
 			final String returnInstruction) {
-		this.spriteId = Strings.requireNotBlank(spriteId);
-		this.alignment = Objects.requireNonNull(pAlignment);
+		this.spriteId = spriteId;
+		this.alignment = pAlignment;
 		this.returnInstruction = Objects.toString(returnInstruction, "ret");
-
-		Objects.requireNonNull(pChars);
-		Bools.requireFalse(pChars.isEmpty());
 
 		// Width / Height
 		this.actualSize = Size.of(pChars);

@@ -17,10 +17,15 @@ import tools.jackson.dataformat.xml.XmlMapper;
  */
 public class TmxReader {
 
+	public static TmxReader from(final ReadableResource source) {
+		Objects.requireNonNull(source, "The source must not be null");
+		return new TmxReader(source);
+	}
+
 	private final ReadableResource source;
 
-	public TmxReader(final ReadableResource source) {
-		this.source = Objects.requireNonNull(source, "The source must not be null");
+	private TmxReader(final ReadableResource source) {
+		this.source = source;
 	}
 
 	public RawData read() throws IOException {
@@ -39,7 +44,7 @@ public class TmxReader {
 
 			final Size layerSize = new Size(layer.width(), layer.height());
 
-			return new RawData(layerData, layerSize);
+			return RawData.of(layerData, layerSize);
 		}
 	}
 }

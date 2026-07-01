@@ -40,7 +40,7 @@ public class NamtblSpritesExtractor {
 
 			// Saves the sprite
 			if (!spriteChars.isEmpty()) {
-				sprites.add(new NamtblSprite(spriteId, spriteChars, spriteSize, alignment, returnInstruction));
+				sprites.add(NamtblSprite.of(spriteId, spriteChars, spriteSize, alignment, returnInstruction));
 			}
 		}
 		return sprites;

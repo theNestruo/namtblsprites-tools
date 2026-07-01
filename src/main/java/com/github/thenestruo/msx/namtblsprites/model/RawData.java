@@ -12,19 +12,25 @@ import com.github.thenestruo.commons.Bools;
  */
 public class RawData {
 
+	/**
+	 * Builder
+	 * @param data the raw data
+	 * @param size the width and height of the chunk
+	 * @return RawData instance
+	 */
+	public static RawData of(final List<Integer> data, final Size size) {
+
+		Objects.requireNonNull(data);
+		Bools.requireTrue(data.size() == size.size());
+
+		return new RawData(data, size);
+	}
+
 	private final List<Integer> data;
 	private final Size size;
 
-	/**
-	 * Constructor
-	 *
-	 * @param data the raw data
-	 * @param size the width and height of the chunk
-	 */
-	public RawData(final List<Integer> data, final Size size) {
-		this.data = Collections.unmodifiableList(Objects.requireNonNull(data));
-
-		Bools.requireTrue(data.size() == size.size());
+	private RawData(final List<Integer> data, final Size size) {
+		this.data = Collections.unmodifiableList(data);
 		this.size = size;
 	}
 

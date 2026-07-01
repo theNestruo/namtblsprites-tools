@@ -121,7 +121,7 @@ public class Tmx2NamtblSpritesApp implements Callable<Integer> {
 		}
 
 		Logger.debug("TmxData will be read from Tiled TMX input file {}", this.inputPath);
-		return new TmxReader(new FileSystemResource(this.inputPath)).read();
+		return TmxReader.from(FileSystemResource.of(this.inputPath)).read();
 	}
 
 	private List<? extends NamtblSprite> toNamtblSprites(final RawData rawData) {
